@@ -48,6 +48,7 @@
 ключи таблиц источников
 ---
 3нф:
+
     pk:
 
         таблица personal_information - id
@@ -60,6 +61,7 @@
         поле inn в таблице documents
 
 star:
+
     pk:
 
         client - id
