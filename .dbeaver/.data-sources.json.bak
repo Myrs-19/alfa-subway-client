@@ -21,6 +21,27 @@
 				},
 				"auth-model": "oracle_native"
 			}
+		},
+		"oracle_thin-191e021ce14-8579482e5a9a540": {
+			"provider": "oracle",
+			"driver": "oracle_thin",
+			"name": "desktop-5h7tutm-mike",
+			"save-password": true,
+			"configuration": {
+				"host": "desktop-5h7tutm",
+				"port": "1521",
+				"database": "XE",
+				"url": "jdbc:oracle:thin:@//desktop-5h7tutm:1521/XE",
+				"configurationType": "MANUAL",
+				"home": "C:\\app\\Anarisuto11\\product\\11.2.0\\client_1\\network\\admin\\sample",
+				"type": "dev",
+				"closeIdleConnection": true,
+				"provider-properties": {
+					"@dbeaver-connection-type@": "BASIC",
+					"@dbeaver-sid-service@": "SERVICE"
+				},
+				"auth-model": "oracle_native"
+			}
 		}
 	},
 	"connection-types": {
