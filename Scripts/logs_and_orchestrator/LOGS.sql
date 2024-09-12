@@ -32,7 +32,7 @@ CREATE OR REPLACE PACKAGE BODY mike.LOGS IS
 		id_job NUMBER -- номер джоба, в котором записывался лог
 	)
 	IS 
-		result_query varchar2(256 CHAR);
+		error_message varchar2(256 CHAR);
 	BEGIN
 		BEGIN -- для отлавливания ошибок
 			INSERT INTO mike.logs_alfa (
@@ -52,7 +52,7 @@ CREATE OR REPLACE PACKAGE BODY mike.LOGS IS
 			);
 		EXCEPTION
 	    	WHEN OTHERS THEN
-	    		result_query := SUBSTR(SQLERRM, 1, 256);
+	    		error_message := SUBSTR(SQLERRM, 1, 256);
 	    		INSERT INTO mike.logs_alfa (
 					dt, -- дата лога
 					num, -- номер лога в процедуре
@@ -63,7 +63,7 @@ CREATE OR REPLACE PACKAGE BODY mike.LOGS IS
 				) VALUES (
 					sysdate,
 					num,
-					result_query,
+					error_message,
 					staging_dwh_lvl,
 					program_title,
 					id_job
@@ -75,8 +75,8 @@ END;
 -- тест
 /*
 BEGIN
-	logs.log(1, 'test', 'test', 'test', 1);
+	mike.logs.log(1, 'test', 'test', 'test', 1);
 END;
 
-SELECT * FROM LOGS_ALFA la;
+SELECT * FROM mike.LOGS_ALFA la;
 */

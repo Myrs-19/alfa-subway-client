@@ -30,7 +30,7 @@ CREATE OR REPLACE PACKAGE BODY mike.orchestrator IS
 		need_process NUMBER -- требуется дальнейшая обработка?
 	)
 	IS
-		result_query varchar2(256 CHAR);
+		error_message varchar2(256 CHAR);
 	BEGIN 
 		BEGIN -- для отлавливания ошибок
 			INSERT INTO mike.orchestrator_alfa (
@@ -48,7 +48,7 @@ CREATE OR REPLACE PACKAGE BODY mike.orchestrator IS
 			);
 		EXCEPTION
 	    	WHEN OTHERS THEN
-	    		result_query := SUBSTR(SQLERRM, 1, 256);
+	    		error_message := SUBSTR(SQLERRM, 1, 256);
 	    		INSERT INTO mike.orchestrator_alfa (
 					title_object, -- название объекта job
 					job_number, -- номер job
@@ -69,7 +69,7 @@ END;
 -- тест
 /*
 BEGIN
-	orchestrator.insert_into_orchestrator('test', 1, 'test', 1, 1);
+	mike.orchestrator.insert_into_orchestrator('test', 1, 'test', 1, 1);
 END;
 
 SELECT * FROM mike.orchestrator_alfa;

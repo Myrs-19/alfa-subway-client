@@ -5,28 +5,33 @@ CREATE OR REPLACE PACKAGE mike.dwi AS
 	-- она же имеет джоб, который запускается каждые 5 минут
 	PROCEDURE wrap_dwi;
 	
-	-- процедура, которая загружает данные в свою таблицу DSRC
+--	 процедура, которая загружает данные в свою таблицу DSRC
 	PROCEDURE star_clnt_dwi(
-		p_id_job -- номер джоба
+		p_id_job NUMBER -- номер джоба
 	);	
 	
-	-- процедура-обертка, которая вызывает все загрузки каждой таблицы 3НФ в свои таблицы DSRC
+--	 процедура-обертка, которая вызывает все загрузки каждой таблицы 3НФ в свои таблицы DSRC
 	PROCEDURE wrap_3nf_dwi(
-		p_id_job -- номер джоба
+		p_id_job NUMBER -- номер джоба
 	);	
 	
-	-- процедура, которая загружает таблицу pi в свою DSRC
-	PROCEDURE 3nf_pi_dwi(
-		p_id_job -- номер джоба
+--	 процедура, которая загружает таблицу pi в свою DSRC
+	PROCEDURE nf3_pi_dwi(
+		p_id_job NUMBER -- номер джоба
 	);
 
-	-- процедура, которая загружает таблицу pn в свою DSRC
-	PROCEDURE 3nf_pn_dwi(
-		p_id_job -- номер джоба
+--	 процедура, которая загружает таблицу pn в свою DSRC
+	PROCEDURE nf3_pn_dwi(
+		p_id_job NUMBER -- номер джоба
 	);
 
-	-- процедура, которая загружает таблицу docs в свою DSRC
-	PROCEDURE 3nf_docs_dwi(
-		p_id_job -- номер джоба
+--	 процедура, которая загружает таблицу docs в свою DSRC
+	PROCEDURE nf3_docs_dwi(
+		p_id_job NUMBER -- номер джоба
+	);
+
+--	 процедура, которая загружает таблицу hp в свою DSRC
+	PROCEDURE nf3_hp_dwi(
+		p_id_job NUMBER -- номер джоба
 	);
 END;
