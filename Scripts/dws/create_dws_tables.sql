@@ -84,11 +84,13 @@ SELECT * FROM DWS001_CLNT.CLIENT001_DELTA;
 
 
 -- создание double для client
+-- drop table DWS001_CLNT.CLIENT001_DOUBLE;
+
 CREATE TABLE DWS001_CLNT.CLIENT001_DOUBLE (
 	-- метаполя
 	dwsjob NUMBER,
-	as_of_day varchar2(1 char), -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
-	effective_flag varchar2(1 char), -- ('I', 'U', 'N' - логический ключ не изменился)
+	as_of_day DATE, -- дата актуализации DWH
+	effective_flag varchar2(1 char), -- 'Y' - если запись эфективна в группе дублей
 		
 	-- поля таблицы-источника
 	id NUMBER, -- идентификатор человека
@@ -184,11 +186,13 @@ SELECT * FROM DWS002_3NF.PI001_DELTA;
 
 
 -- создание double для pi
+-- drop table DWS002_3NF.PI001_DOUBLE;
+
 CREATE TABLE DWS002_3NF.PI001_DOUBLE (
 	-- метаполя
 	dwsjob NUMBER,
-	as_of_day varchar2(1 char), -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
-	effective_flag varchar2(1 char), -- ('I', 'U', 'N' - логический ключ не изменился)
+	as_of_day DATE, -- дата актуализации DWH
+	effective_flag varchar2(1 char), -- 'Y' - если запись эфективна в группе дублей
 		
 	-- поля таблицы-источника
 	id NUMBER, -- идентификатор человека
@@ -270,11 +274,13 @@ SELECT * FROM DWS002_3NF.PN001_DELTA;
 
 
 -- создание double для PN
+-- drop table DWS002_3NF.PN001_DOUBLE;
+
 CREATE TABLE DWS002_3NF.PN001_DOUBLE (
 	-- метаполя
 	dwsjob NUMBER,
-	as_of_day varchar2(1 char), -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
-	effective_flag varchar2(1 char), -- ('I', 'U', 'N' - логический ключ не изменился)
+	as_of_day DATE, -- дата актуализации DWH
+	effective_flag varchar2(1 char), -- 'Y' - если запись эфективна в группе дублей
 		
 	-- поля таблицы-источника
 	id NUMBER, -- идентификатор человека
@@ -356,11 +362,13 @@ SELECT * FROM DWS002_3NF.DOCS001_DELTA;
 
 
 -- создание double для DOCS
+-- drop table DWS002_3NF.DOCS001_DOUBLE;
+
 CREATE TABLE DWS002_3NF.DOCS001_DOUBLE (
 	-- метаполя
 	dwsjob NUMBER,
-	as_of_day varchar2(1 char), -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
-	effective_flag varchar2(1 char), -- ('I', 'U', 'N' - логический ключ не изменился)
+	as_of_day DATE, -- дата актуализации DWH
+	effective_flag varchar2(1 char), -- 'Y' - если запись эфективна в группе дублей
 		
 	-- поля таблицы-источника
 	id NUMBER, -- идентификатор человека
@@ -443,11 +451,13 @@ SELECT * FROM DWS002_3NF.HP001_DELTA;
 
 
 -- создание double для HP
+-- drop table DWS002_3NF.HP001_DOUBLE;
+
 CREATE TABLE DWS002_3NF.HP001_DOUBLE (
 	-- метаполя
 	dwsjob NUMBER,
-	as_of_day varchar2(1 char), -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
-	effective_flag varchar2(1 char), -- ('I', 'U', 'N' - логический ключ не изменился)
+	as_of_day DATE, -- дата актуализации DWH
+	effective_flag varchar2(1 char), -- 'Y' - если запись эфективна в группе дублей
 		
 	-- поля таблицы-источника
 	id NUMBER, -- идентификатор человека
