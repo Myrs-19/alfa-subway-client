@@ -21,7 +21,7 @@ SELECT
 	1.0,
 	1.0
 FROM dual
-CONNECT BY LEVEL <= 2;
+CONNECT BY LEVEL <= 1;
 
 -- запись для изменений
 INSERT INTO mike.star_client(
@@ -51,9 +51,31 @@ FROM dual;
 
 -- выполнять для другого джоба (следующего)
 update mike.star_client set
-name = 'mike_test'
+name = 'mike'
 where id = 2;
 
  */
 
 SELECT * FROM mike.star_client;
+
+/*
+
+-- меняю лог ключ у id = 1
+update mike.star_client set
+inn = '123'
+where id = 2;
+
+delete from mike.star_client
+where rowid = (
+	select min(rowid)
+	from mike.star_client
+	where id = 1
+)
+
+*/
+
+SELECT * FROM mike.star_client;
+
+
+
+

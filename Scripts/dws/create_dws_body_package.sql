@@ -159,6 +159,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 				ROW_NUMBER() OVER(PARTITION BY id ORDER BY id, name, BIRTHDAY, age, phone, inn, pasport, weight, height) rn,
 				COUNT(id) OVER(PARTITION BY id) cnt
 			FROM DWI001_STAR.client001_DSRC dsrc
+			WHERE dwsjob = p_id_job
 		) s
 		WHERE cnt > 1;
 		
@@ -193,7 +194,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 			dwsauto
 		FROM (
 			SELECT 
-				id,
+				dsrc.id,
 				
 				p_id_job dwsjob,
 				NULL dwsauto
@@ -206,7 +207,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 			-- смотрим есть ли такой pk в nklink 
 			LEFT JOIN DWS001_CLNT.CLIENT001_NKLINK nklink
 				ON nklink.id = dsrc.id
-			RIGHT JOIN (
+			LEFT JOIN (
 				SELECT *
 				FROM DWS001_CLNT.CLIENT001_DOUBLE double
 				WHERE dwsjob = p_id_job AND effective_flag = 'Y'
@@ -230,7 +231,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 					double.height = dsrc.height
 			WHERE nklink.id IS NULL
 			-- для строк из dsrc у которых все поля одинаковы
-			GROUP BY id
+			GROUP BY dsrc.id
 		) s;
 		
 	
@@ -294,10 +295,18 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 				dsrc.pasport,
 				dsrc.weight,
 				dsrc.height
-			FROM DWI001_STAR.client001_DSRC dsrc
-			LEFT JOIN DWS001_CLNT.CLIENT001_DOUBLE double
+			FROM (
+				SELECT *
+				FROM DWI001_STAR.client001_DSRC dsrc
+				WHERE dwsjob = p_id_job
+			) dsrc
+			LEFT JOIN (
+				SELECT *
+				FROM DWS001_CLNT.CLIENT001_DOUBLE double
+				WHERE dwsjob = p_id_job
+			) double
 				ON double.id = dsrc.id
-			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
+			WHERE dsrc.dwsjob = p_id_job AND (double.effective_flag = 'Y' OR double.id IS NULL)
 			-- для тех записей у которых все поля одинаковы
 			GROUP BY
 				dsrc.id,
@@ -320,7 +329,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 	
 		mike.logs.log(2, 'случай dwsact = I обработан', CONSTANTS.dws_title_lvl, 'clnt_001_dws_delta', p_id_job);
 	
-		-- случай dwsact = 'U' - новые строки для миро
+		-- случай dwsact = 'U' - измененные строки для миро
 		INSERT INTO DWS001_CLNT.CLIENT001_DELTA(
 			nk,	
 	
@@ -373,8 +382,16 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 				dsrc.pasport,
 				dsrc.weight,
 				dsrc.height
-			FROM DWI001_STAR.client001_DSRC dsrc
-			LEFT JOIN DWS001_CLNT.CLIENT001_DOUBLE double
+			FROM (
+				SELECT *
+				FROM DWI001_STAR.client001_DSRC dsrc
+				WHERE dwsjob = p_id_job
+			) dsrc
+			LEFT JOIN (
+				SELECT *
+				FROM DWS001_CLNT.CLIENT001_DOUBLE double
+				WHERE dwsjob = p_id_job
+			) double
 				ON double.id = dsrc.id
 			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
 			-- для тех записей у которых все поля одинаковы
@@ -415,7 +432,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 	
 		mike.logs.log(3, 'случай dwsact = U обработан', CONSTANTS.dws_title_lvl, 'clnt_001_dws_delta', p_id_job);
 		
-		-- случай dwsact = 'D' - новые строки для миро
+		-- случай dwsact = 'D' - удаленные строки для миро
 		INSERT INTO DWS001_CLNT.CLIENT001_DELTA(
 			nk,	
 	
@@ -444,15 +461,15 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 			'N' dwsuniact, -- ('I', 'U', 'N' - логический ключ не изменился)
 				
 			-- поля таблицы-источника
-			dsrc.id, -- идентификатор человека
-			dsrc.name, -- имя человека
-			dsrc.birthday, -- день рождения человека
-			dsrc.age, -- возраст человека
-			dsrc.phone, -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
-			dsrc.inn, -- инн человека (формат - ххх-ххх-ххх хх)
-			dsrc.pasport, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
-			dsrc.weight, -- вес человека 
-			dsrc.height -- рост человека
+			mirror.id, -- идентификатор человека
+			mirror.name, -- имя человека
+			mirror.birthday, -- день рождения человека
+			mirror.age, -- возраст человека
+			mirror.phone, -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
+			mirror.inn, -- инн человека (формат - ххх-ххх-ххх хх)
+			mirror.pasport, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
+			mirror.weight, -- вес человека 
+			mirror.height -- рост человека
 		FROM (
 			-- выбираем записи из интерфейсного уровня на этом джобе
 			SELECT 
@@ -465,8 +482,16 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 				dsrc.pasport,
 				dsrc.weight,
 				dsrc.height
-			FROM DWI001_STAR.client001_DSRC dsrc
-			LEFT JOIN DWS001_CLNT.CLIENT001_DOUBLE double
+			FROM (
+				SELECT *
+				FROM DWI001_STAR.client001_DSRC dsrc
+				WHERE dwsjob = p_id_job
+			) dsrc
+			LEFT JOIN (
+				SELECT *
+				FROM DWS001_CLNT.CLIENT001_DOUBLE double
+				WHERE dwsjob = p_id_job
+			) double
 				ON double.id = dsrc.id
 			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
 			-- для тех записей у которых все поля одинаковы
@@ -482,10 +507,14 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 				dsrc.height
 		) dsrc
 		-- join с миро для сравнения
-		RIGHT JOIN DWS001_CLNT.CLIENT001_MIRROR mirror
+		RIGHT JOIN (
+			SELECT *
+			FROM DWS001_CLNT.CLIENT001_MIRROR mirror
+			WHERE dwsarchive <> 'D'
+		) mirror
 			ON dsrc.id = mirror.id
 		JOIN DWS001_CLNT.CLIENT001_NKLINK nklink
-			ON nklink.id = dsrc.id
+			ON nklink.nk = mirror.nk
 		-- выбираем те записи, которых еще нет в миро
 		WHERE dsrc.id IS NULL;
 	
