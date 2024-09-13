@@ -35,3 +35,20 @@ GROUP BY
 SELECT *
 FROM dual
 WHERE (1,2) = (1,2);
+
+DECLARE
+j NUMBER;
+BEGIN
+	SELECT min(j_n) INTO j
+	FROM (
+		SELECT job_number j_n
+		FROM mike.orchestrator_alfa
+		WHERE staging_lvl = mike.CONSTANTS.dwi_title_lvl AND is_successful = 1 AND need_process = 1
+		MINUS 
+		SELECT job_number j_n
+		FROM mike.orchestrator_alfa
+		WHERE staging_lvl = mike.CONSTANTS.dws_title_lvl
+	);
+
+	dbms_output.put_line(j);
+END;

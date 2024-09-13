@@ -162,7 +162,6 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 			WHERE dwsjob = p_id_job
 		) s
 		WHERE cnt > 1;
-		
 	
 		mike.logs.log(2, 'определение дублей завершено', CONSTANTS.dws_title_lvl, 'clnt_001_dws_double', p_id_job);
 	END;
@@ -234,7 +233,6 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 			GROUP BY dsrc.id
 		) s;
 		
-	
 		mike.logs.log(2, 'формирование nk завершено', CONSTANTS.dws_title_lvl, 'clnt_001_dws_pk_to_nk', p_id_job);
 	END;
 
@@ -598,11 +596,46 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 		error_message varchar2(256 CHAR);
 	BEGIN
 		BEGIN -- для отлавливания ошибок
-			dbms_output.put_line('todo');
+			mike.logs.log(1, 'запуск уровня dws для таблицы pi_002', CONSTANTS.dws_title_lvl, 'wrap_PI_002_dws', p_id_job);
+		
+			mike.dws.PI_002_dws_double(p_id_job);
+		
+			mike.logs.log(2, 'завершена обработка дублей', CONSTANTS.dws_title_lvl, 'wrap_PI_002_dws', p_id_job);
+		
+			mike.dws.PI_002_dws_pk_to_nk(p_id_job);
+		
+			mike.logs.log(3, 'завершено формирование nk', CONSTANTS.dws_title_lvl, 'wrap_PI_002_dws', p_id_job);
+		
+			mike.dws.PI_002_dws_delta(p_id_job);
+		
+			mike.logs.log(4, 'завершено формирование delta', CONSTANTS.dws_title_lvl, 'wrap_PI_002_dws', p_id_job);
+		
+			mike.dws.PI_002_dws_mirror(p_id_job);
+		
+			mike.logs.log(5, 'завершено формирование mirror', CONSTANTS.dws_title_lvl, 'wrap_PI_002_dws', p_id_job);
+		
+			mike.orchestrator.insert_into_orchestrator(
+	    			CONSTANTS.table_source_title_3nf_pi,
+	    			1,
+	    			CONSTANTS.dws_title_lvl,
+	    			p_id_job,
+	    			1
+	    		);	
+
+	    	mike.logs.log(6, 'запись в оркестратор вставлена', CONSTANTS.dws_title_lvl, 'wrap_PI_002_dws', p_id_job);
 		EXCEPTION
 	    	WHEN OTHERS THEN
 	    		error_message := SUBSTR(SQLERRM, 1, 256);
 	    	    	
+	    		mike.logs.log(7, 'error = ' || error_message, CONSTANTS.dws_title_lvl, 'wrap_PI_002_dws', p_id_job);
+	    	
+		    	mike.orchestrator.insert_into_orchestrator(
+		    			CONSTANTS.table_source_title_3nf_pi,
+		    			-1,
+		    			CONSTANTS.dws_title_lvl,
+		    			p_id_job,
+		    			1
+		    		);
 		END;
 	END;
 
@@ -611,15 +644,46 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
-		error_message varchar2(256 CHAR);
 	BEGIN
-		BEGIN -- для отлавливания ошибок
-			dbms_output.put_line('todo');
-		EXCEPTION
-	    	WHEN OTHERS THEN
-	    		error_message := SUBSTR(SQLERRM, 1, 256);
-	    	    	
-		END;
+		mike.logs.log(1, 'определение дублей', CONSTANTS.dws_title_lvl, 'PI_002_dws_double', p_id_job);
+	    	    
+		INSERT INTO DWS002_3NF.PI001_DOUBLE(
+			-- метаполя
+			dwsjob,
+			as_of_day, -- дата актуализации DWH
+			effective_flag, -- 'Y' - если запись эфективна в группе дублей
+				
+			-- поля таблицы-источника
+			id, -- идентификатор человека
+			name, -- имя человека
+			birthday, -- день рождения человека
+			age -- возраст человека
+		)
+		SELECT
+			-- метаполя
+			p_id_job dwsjob,
+			sysdate as_of_day, -- дата актуализации DWH
+			decode(
+				rn, 
+				1, 'Y',
+				NULL ) effective_flag, -- 'Y' - если запись эфективна в группе дублей
+				
+			-- поля таблицы-источника
+			id, -- идентификатор человека
+			name, -- имя человека
+			birthday, -- день рождения человека
+			age -- возраст человека
+		FROM (
+			SELECT 
+				dsrc.*, 
+				ROW_NUMBER() OVER(PARTITION BY id ORDER BY id, name, BIRTHDAY, age) rn,
+				COUNT(id) OVER(PARTITION BY id) cnt
+			FROM DWI002_3NF.personal_information002_DSRC dsrc
+			WHERE dwsjob = p_id_job
+		) s
+		WHERE cnt > 1;
+		
+		mike.logs.log(2, 'определение дублей завершено', CONSTANTS.dws_title_lvl, 'PI_002_dws_double', p_id_job);
 	END;
 
 	-- процедура преобразования pk в nk таблицы PI
@@ -627,15 +691,59 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
-		error_message varchar2(256 CHAR);
 	BEGIN
-		BEGIN -- для отлавливания ошибок
-			dbms_output.put_line('todo');
-		EXCEPTION
-	    	WHEN OTHERS THEN
-	    		error_message := SUBSTR(SQLERRM, 1, 256);
-	    	    	
-		END;
+		mike.logs.log(1, 'формирование nk', CONSTANTS.dws_title_lvl, 'PI_002_dws_pk_to_nk', p_id_job);
+		
+		INSERT INTO DWS002_3NF.PI001_NKLINK(
+			nk,
+	
+			-- pk исходной системы
+			id, -- идентификатор человека
+			
+			-- метаполя
+			dwsjob,
+			dwsauto -- признак записи сгенерированной автоматически при загрузке фактов, Y - автоматически, NULL - нет
+		)
+		SELECT 
+			mike.key_dwh.nextval nk,
+		
+			id,
+			
+			dwsjob,
+			dwsauto
+		FROM (
+			SELECT 
+				dsrc.id,
+				
+				p_id_job dwsjob,
+				NULL dwsauto
+			FROM (
+			-- выбираем записи из интерфейсного уровня на этом джобе
+				SELECT *
+				FROM DWI002_3NF.personal_information002_DSRC dsrc
+				WHERE dwsjob = p_id_job
+			) dsrc
+			-- смотрим есть ли такой pk в nklink 
+			LEFT JOIN DWS002_3NF.PI001_NKLINK nklink
+				ON nklink.id = dsrc.id
+			LEFT JOIN (
+				SELECT *
+				FROM DWS002_3NF.PI001_DOUBLE double
+				WHERE dwsjob = p_id_job AND effective_flag = 'Y'
+			) double
+				ON double.id = dsrc.id
+					AND 
+					double.name = dsrc.name
+					AND 
+					double.birthday = dsrc.birthday
+					AND
+					double.age = dsrc.age
+			WHERE nklink.id IS NULL
+			-- для строк из dsrc у которых все поля одинаковы
+			GROUP BY dsrc.id
+		) s;
+		
+		mike.logs.log(2, 'формирование nk завершено', CONSTANTS.dws_title_lvl, 'PI_002_dws_pk_to_nk', p_id_job);
 	END;
 
 	-- процедура для формировании delta таблицы PI
@@ -643,15 +751,218 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
-		error_message varchar2(256 CHAR);
+	
+	DECLARE
+		p_id_job NUMBER := -1;
 	BEGIN
-		BEGIN -- для отлавливания ошибок
-			dbms_output.put_line('todo');
-		EXCEPTION
-	    	WHEN OTHERS THEN
-	    		error_message := SUBSTR(SQLERRM, 1, 256);
-	    	    	
-		END;
+		mike.logs.log(1, 'формирование delta', CONSTANTS.dws_title_lvl, 'PI_002_dws_delta', p_id_job);
+		
+		-- случай dwsact = 'I' - новые строки для миро
+		INSERT INTO DWS002_3NF.PI001_DELTA(
+			nk,	
+	
+			-- метаполя
+			dwsjob,
+			dwsact, -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
+			dwsuniact, -- ('I', 'U', 'N' - логический ключ не изменился)
+				
+			-- поля таблицы-источника
+			id, -- идентификатор человека
+			name, -- имя человека
+			birthday, -- день рождения человека
+			age
+		)
+		SELECT 
+			nklink.nk,	
+	
+			-- метаполя
+			p_id_job dwsjob,
+			'I' dwsact, -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
+			'I' dwsuniact, -- ('I', 'U', 'N' - логический ключ не изменился)
+				
+			-- поля таблицы-источника
+			dsrc.id, -- идентификатор человека
+			dsrc.name, -- имя человека
+			dsrc.birthday, -- день рождения человека
+			dsrc.age
+		FROM (
+			-- выбираем записи из интерфейсного уровня на этом джобе
+			SELECT 
+				dsrc.id,
+				dsrc.name,
+				dsrc.birthday,
+				dsrc.age
+			FROM (
+				SELECT *
+				FROM DWI002_3NF.personal_information002_DSRC dsrc
+				WHERE dwsjob = p_id_job
+			) dsrc
+			LEFT JOIN (
+				SELECT *
+				FROM DWS002_3NF.PI001_DOUBLE double
+				WHERE dwsjob = p_id_job
+			) double
+				ON double.id = dsrc.id
+			WHERE dsrc.dwsjob = p_id_job AND (double.effective_flag = 'Y' OR double.id IS NULL)
+			-- для тех записей у которых все поля одинаковы
+			GROUP BY
+				dsrc.id,
+				dsrc.name,
+				dsrc.birthday,
+				dsrc.age
+		) dsrc
+		-- join с миро для сравнения
+		LEFT JOIN DWS002_3NF.PI001_MIRROR mirror
+			ON dsrc.id = mirror.id
+		JOIN DWS002_3NF.PI001_NKLINK nklink
+			ON nklink.id = dsrc.id
+		-- выбираем те записи, которых еще нет в миро
+		WHERE mirror.id IS NULL;
+	
+		mike.logs.log(2, 'случай dwsact = I обработан', CONSTANTS.dws_title_lvl, 'PI_002_dws_delta', p_id_job);
+	
+		-- случай dwsact = 'U' - измененные строки для миро
+		INSERT INTO DWS002_3NF.PI001_DELTA(
+			nk,	
+	
+			-- метаполя
+			dwsjob,
+			dwsact, -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
+			dwsuniact, -- ('I', 'U', 'N' - логический ключ не изменился)
+				
+			-- поля таблицы-источника
+			id, -- идентификатор человека
+			name, -- имя человека
+			birthday, -- день рождения человека
+			age
+		)
+		SELECT 
+			nklink.nk,	
+	
+			-- метаполя
+			p_id_job dwsjob,
+			'U' dwsact, -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
+			CASE 
+				WHEN dsrc.inn <> mirror.inn THEN 'U'
+				ELSE 'N'
+			END dwsuniact, -- ('I', 'U', 'N' - логический ключ не изменился)
+				
+			-- поля таблицы-источника
+			dsrc.id, -- идентификатор человека
+			dsrc.name, -- имя человека
+			dsrc.birthday, -- день рождения человека
+			dsrc.age
+		FROM (
+			-- выбираем записи из интерфейсного уровня на этом джобе
+			SELECT 
+				dsrc.id,
+				dsrc.name,
+				dsrc.birthday,
+				dsrc.age
+			FROM (
+				SELECT *
+				FROM DWI002_3NF.personal_information002_DSRC dsrc
+				WHERE dwsjob = p_id_job
+			) dsrc
+			LEFT JOIN (
+				SELECT *
+				FROM DWS002_3NF.PI001_DOUBLE double
+				WHERE dwsjob = p_id_job
+			) double
+				ON double.id = dsrc.id
+			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
+			-- для тех записей у которых все поля одинаковы
+			GROUP BY
+				dsrc.id,
+				dsrc.name,
+				dsrc.birthday,
+				dsrc.age
+		) dsrc
+		-- join с миро для сравнения
+		LEFT JOIN DWS002_3NF.PI001_MIRROR mirror
+			ON dsrc.id = mirror.id
+		JOIN DWS002_3NF.PI001_NKLINK nklink
+			ON nklink.id = dsrc.id
+		-- выбираем те записи, которых еще нет в миро
+		WHERE mirror.id IS NOT NULL AND (
+			dsrc.name <> mirror.name 
+			OR
+			dsrc.birthday <> mirror.birthday
+			OR 
+			dsrc.age <> mirror.age
+		);
+	
+		mike.logs.log(3, 'случай dwsact = U обработан', CONSTANTS.dws_title_lvl, 'PI_002_dws_delta', p_id_job);
+		
+		-- случай dwsact = 'D' - удаленные строки для миро
+		INSERT INTO DWS002_3NF.PI001_DELTA(
+			nk,	
+	
+			-- метаполя
+			dwsjob,
+			dwsact, -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
+			dwsuniact, -- ('I', 'U', 'N' - логический ключ не изменился)
+				
+			-- поля таблицы-источника
+			id, -- идентификатор человека
+			name, -- имя человека
+			birthday, -- день рождения человека
+			age
+		)
+		SELECT 
+			nklink.nk,	
+	
+			-- метаполя
+			p_id_job dwsjob,
+			'D' dwsact, -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
+			'N' dwsuniact, -- ('I', 'U', 'N' - логический ключ не изменился)
+				
+			-- поля таблицы-источника
+			mirror.id, -- идентификатор человека
+			mirror.name, -- имя человека
+			mirror.birthday, -- день рождения человека
+			mirror.age
+		FROM (
+			-- выбираем записи из интерфейсного уровня на этом джобе
+			SELECT 
+				dsrc.id,
+				dsrc.name,
+				dsrc.birthday,
+				dsrc.age
+			FROM (
+				SELECT *
+				FROM DWI002_3NF.personal_information002_DSRC dsrc
+				WHERE dwsjob = p_id_job
+			) dsrc
+			LEFT JOIN (
+				SELECT *
+				FROM DWS002_3NF.PI001_DOUBLE double
+				WHERE dwsjob = p_id_job
+			) double
+				ON double.id = dsrc.id
+			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
+			-- для тех записей у которых все поля одинаковы
+			GROUP BY
+				dsrc.id,
+				dsrc.name,
+				dsrc.birthday,
+				dsrc.age
+		) dsrc
+		-- join с миро для сравнения
+		RIGHT JOIN (
+			SELECT *
+			FROM DWS002_3NF.PI001_MIRROR mirror
+			WHERE dwsarchive <> 'D'
+		) mirror
+			ON dsrc.id = mirror.id
+		JOIN DWS002_3NF.PI001_NKLINK nklink
+			ON nklink.nk = mirror.nk
+		-- выбираем те записи, которых еще нет в миро
+		WHERE dsrc.id IS NULL;
+	
+		mike.logs.log(3, 'случай dwsact = D обработан', CONSTANTS.dws_title_lvl, 'PI_002_dws_delta', p_id_job);
+	
+		mike.logs.log(4, 'формирование delta завершено', CONSTANTS.dws_title_lvl, 'PI_002_dws_delta', p_id_job);
 	END;
 
 	-- процедура для актуализации mirror таблицы PI
