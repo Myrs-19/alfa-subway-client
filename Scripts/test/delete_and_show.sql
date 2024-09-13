@@ -24,6 +24,24 @@ delete from DWS002_3NF.PI001_NKLINK;
 delete from DWS002_3NF.PI001_DELTA;
 delete FROM DWS002_3NF.PI001_MIRROR;
 
+-- 3nf pn
+delete from DWS002_3NF.Pn001_DOUBLE;
+delete from DWS002_3NF.Pn001_NKLINK;
+delete from DWS002_3NF.Pn001_DELTA;
+delete FROM DWS002_3NF.Pn001_MIRROR;
+
+-- 3nf docs
+delete from DWS002_3NF.docs001_DOUBLE;
+delete from DWS002_3NF.docs001_NKLINK;
+delete from DWS002_3NF.docs001_DELTA;
+delete FROM DWS002_3NF.docs001_MIRROR;
+
+-- 3nf hp
+delete from DWS002_3NF.hp001_DOUBLE;
+delete from DWS002_3NF.hp001_NKLINK;
+delete from DWS002_3NF.hp001_DELTA;
+delete FROM DWS002_3NF.hp001_MIRROR;
+
 */
 
 

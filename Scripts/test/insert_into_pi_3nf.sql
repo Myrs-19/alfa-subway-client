@@ -6,8 +6,8 @@ INSERT INTO mike.personal_information (
 	birthday, -- день рождения человека
 	age -- возраст человека
 ) VALUES (
-	2,
-	'name',
+	1,
+	'123123123',
 	DATE '2019-01-01',
 	21
 );
@@ -30,10 +30,10 @@ INSERT INTO mike.personal_information (
 	birthday, -- день рождения человека
 	age -- возраст человека
 ) VALUES (
-	1,
+	3,
 	'mike',
 	DATE '2003-06-12',
-	22
+	2222
 );
 
 SELECT * FROM mike.personal_information;
