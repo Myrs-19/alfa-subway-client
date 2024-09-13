@@ -140,6 +140,8 @@ SELECT * FROM DWS002_3NF.PI001_NKLINK;
 
 
 -- создание mirror для pi
+-- drop table DWS002_3NF.PI001_MIRROR;
+
 CREATE TABLE DWS002_3NF.PI001_MIRROR (
 	nk NUMBER,	
 	
@@ -152,7 +154,8 @@ CREATE TABLE DWS002_3NF.PI001_MIRROR (
 	id NUMBER, -- идентификатор человека
 	name VARCHAR2(256 CHAR), -- имя человека
 	birthday DATE, -- день рождения человека
-	age NUMBER -- возраст человека
+	age NUMBER, -- возраст человека
+	inn NUMBER -- инн человека (набор цифр)
 );
 
 -- даем доступ test - выполнять команду под DWS002_3NF
@@ -163,6 +166,8 @@ SELECT * FROM DWS002_3NF.PI001_MIRROR;
 
 
 -- создание delta для pi
+-- drop table DWS002_3NF.PI001_DELTA;
+
 CREATE TABLE DWS002_3NF.PI001_DELTA (
 	nk NUMBER,	
 	
@@ -175,7 +180,8 @@ CREATE TABLE DWS002_3NF.PI001_DELTA (
 	id NUMBER, -- идентификатор человека
 	name VARCHAR2(256 CHAR), -- имя человека
 	birthday DATE, -- день рождения человека
-	age NUMBER -- возраст человека
+	age NUMBER, -- возраст человека
+	inn NUMBER -- инн человека (набор цифр)
 );
 
 -- даем доступ test - выполнять команду под DWS001_CLNT
@@ -232,6 +238,8 @@ SELECT * FROM DWS002_3NF.PN001_NKLINK;
 
 
 -- создание mirror для PN
+-- drop table DWS002_3NF.PN001_MIRROR;
+
 CREATE TABLE DWS002_3NF.PN001_MIRROR (
 	nk NUMBER,	
 	
@@ -242,7 +250,8 @@ CREATE TABLE DWS002_3NF.PN001_MIRROR (
 	
 	-- поля таблицы-источника
 	id NUMBER, -- идентификатор человека
-	phone VARCHAR2(11 CHAR) -- номер телефона человека
+	phone VARCHAR2(11 CHAR), -- номер телефона человека
+	inn NUMBER -- инн человека (набор цифр)
 );
 
 -- даем доступ test - выполнять команду под DWS002_3NF
@@ -253,6 +262,8 @@ SELECT * FROM DWS002_3NF.PN001_MIRROR;
 
 
 -- создание delta для PN
+-- drop table DWS002_3NF.PN001_DELTA;
+
 CREATE TABLE DWS002_3NF.PN001_DELTA (
 	nk NUMBER,	
 	
@@ -263,7 +274,8 @@ CREATE TABLE DWS002_3NF.PN001_DELTA (
 		
 	-- поля таблицы-источника
 	id NUMBER, -- идентификатор человека
-	phone VARCHAR2(11 CHAR) -- номер телефона человека
+	phone VARCHAR2(11 CHAR), -- номер телефона человека
+	inn NUMBER -- инн человека (набор цифр)
 );
 
 -- даем доступ test - выполнять команду под DWS001_CLNT
@@ -318,6 +330,8 @@ SELECT * FROM DWS002_3NF.DOCS001_NKLINK;
 
 
 -- создание mirror для DOCS
+-- drop table DWS002_3NF.DOCS001_MIRROR;
+
 CREATE TABLE DWS002_3NF.DOCS001_MIRROR (
 	nk NUMBER,	
 	
@@ -329,7 +343,7 @@ CREATE TABLE DWS002_3NF.DOCS001_MIRROR (
 	-- поля таблицы-источника
 	id NUMBER, -- идентификатор человека
 	inn NUMBER, -- инн человека (набор цифр)
-	pasport NUMBER-- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
+	pasport NUMBER -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
 );
 
 -- даем доступ test - выполнять команду под DWS002_3NF
@@ -340,6 +354,8 @@ SELECT * FROM DWS002_3NF.DOCS001_MIRROR;
 
 
 -- создание delta для DOCS
+-- drop table DWS002_3NF.DOCS001_DELTA;
+
 CREATE TABLE DWS002_3NF.DOCS001_DELTA (
 	nk NUMBER,	
 	
@@ -351,7 +367,8 @@ CREATE TABLE DWS002_3NF.DOCS001_DELTA (
 	-- поля таблицы-источника
 	id NUMBER, -- идентификатор человека
 	inn NUMBER, -- инн человека (набор цифр)
-	pasport NUMBER-- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
+	pasport NUMBER, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
+	inn NUMBER -- инн человека (набор цифр)
 );
 
 -- даем доступ test - выполнять команду под DWS001_CLNT
@@ -407,6 +424,8 @@ SELECT * FROM DWS002_3NF.HP001_NKLINK;
 
 
 -- создание mirror для HP
+-- drop table DWS002_3NF.HP001_MIRROR;
+
 CREATE TABLE DWS002_3NF.HP001_MIRROR (
 	nk NUMBER,	
 	
@@ -418,7 +437,8 @@ CREATE TABLE DWS002_3NF.HP001_MIRROR (
 	-- поля таблицы-источника
 	id NUMBER, -- идентификатор человека
 	weight REAL, -- вес человека 
-	height REAL -- рост человека
+	height REAL, -- рост человека
+	inn NUMBER -- инн человека (набор цифр)
 );
 
 -- даем доступ test - выполнять команду под DWS002_3NF
@@ -429,6 +449,8 @@ SELECT * FROM DWS002_3NF.HP001_MIRROR;
 
 
 -- создание delta для HP
+-- drop table DWS002_3NF.HP001_DELTA;
+
 CREATE TABLE DWS002_3NF.HP001_DELTA (
 	nk NUMBER,	
 	
@@ -440,7 +462,8 @@ CREATE TABLE DWS002_3NF.HP001_DELTA (
 	-- поля таблицы-источника
 	id NUMBER, -- идентификатор человека
 	weight REAL, -- вес человека 
-	height REAL -- рост человека
+	height REAL, -- рост человека
+	inn NUMBER -- инн человека (набор цифр)
 );
 
 -- даем доступ test - выполнять команду под DWS001_CLNT
