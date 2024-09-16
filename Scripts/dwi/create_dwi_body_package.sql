@@ -10,14 +10,11 @@ CREATE OR REPLACE PACKAGE BODY mike.dwi IS
 		BEGIN -- для отлавливания ошибок
 			
 			-- определение номера джоба
-			-- максимальный + 1
+			-- максимальный номер джоба на этом уровне в таблице оркестратор + 1
 			SELECT nvl(max(job_number), 0) + 1
 			INTO l_id_job
 			FROM mike.orchestrator_alfa
-			WHERE 
-				title_object = CONSTANTS.table_source_title_star_clnt 
-				AND 
-				staging_lvl = CONSTANTS.dwi_title_lvl;
+			WHERE staging_lvl = CONSTANTS.dwi_title_lvl;
 			
 			mike.logs.log(1, 'запуск dwi', CONSTANTS.dwi_title_lvl, 'wrap_dwi', l_id_job);
 			
@@ -182,12 +179,30 @@ CREATE OR REPLACE PACKAGE BODY mike.dwi IS
 		
 			mike.logs.log(2, 'загрузка pi в DSRC завершена', CONSTANTS.dwi_title_lvl, 'nf3_pi_dwi', p_id_job);
 		
+			mike.orchestrator.insert_into_orchestrator(
+	    			CONSTANTS.table_source_title_3nf_pi,
+	    			1,
+	    			CONSTANTS.dwi_title_lvl,
+	    			p_id_job,
+	    			1
+	    		);
+	    	
+			mike.logs.log(3, 'запись в оркестратор вставлена', CONSTANTS.dwi_title_lvl, 'nf3_pi_dwi', p_id_job);
+	
 		EXCEPTION
 	    	WHEN OTHERS THEN
 	    		error_message := SUBSTR(SQLERRM, 1, 256);
 	    	
-	    		mike.logs.log(3, 'error = ' || error_message, CONSTANTS.dwi_title_lvl, 'nf3_pi_dwi', p_id_job);
-		END;
+	    		mike.logs.log(4, 'error = ' || error_message, CONSTANTS.dwi_title_lvl, 'nf3_pi_dwi', p_id_job);
+		
+	    		mike.orchestrator.insert_into_orchestrator(
+	    			CONSTANTS.table_source_title_3nf_pi,
+	    			-1,
+	    			CONSTANTS.dwi_title_lvl,
+	    			p_id_job,
+	    			1
+	    		);	
+	    END;
 	END;
 	
 	-- процедура, которая загружает таблицу pn в свою DSRC
@@ -223,12 +238,30 @@ CREATE OR REPLACE PACKAGE BODY mike.dwi IS
 		
 			mike.logs.log(2, 'загрузка pn в DSRC завершена', CONSTANTS.dwi_title_lvl, 'nf3_pn_dwi', p_id_job);
 		
+			mike.orchestrator.insert_into_orchestrator(
+	    			CONSTANTS.table_source_title_3nf_pn,
+	    			1,
+	    			CONSTANTS.dwi_title_lvl,
+	    			p_id_job,
+	    			1
+	    		);
+	    	
+			mike.logs.log(3, 'запись в оркестратор вставлена', CONSTANTS.dwi_title_lvl, 'nf3_pn_dwi', p_id_job);
+		
 		EXCEPTION
 	    	WHEN OTHERS THEN
 	    		error_message := SUBSTR(SQLERRM, 1, 256);
 	    	
 	    		mike.logs.log(3, 'error = ' || error_message, CONSTANTS.dwi_title_lvl, 'nf3_pn_dwi', p_id_job);
-		END;
+		
+	    		mike.orchestrator.insert_into_orchestrator(
+	    			CONSTANTS.table_source_title_3nf_pn,
+	    			-1,
+	    			CONSTANTS.dwi_title_lvl,
+	    			p_id_job,
+	    			1
+	    		);	
+	    END;
 	END;
 
 	-- процедура, которая загружает таблицу docs в свою DSRC
@@ -266,12 +299,31 @@ CREATE OR REPLACE PACKAGE BODY mike.dwi IS
 		
 		
 			mike.logs.log(2, 'загрузка docs в DSRC завершена', CONSTANTS.dwi_title_lvl, 'nf3_docs_dwi', p_id_job);	
+		
+			mike.orchestrator.insert_into_orchestrator(
+	    			CONSTANTS.table_source_title_3nf_docs,
+	    			1,
+	    			CONSTANTS.dwi_title_lvl,
+	    			p_id_job,
+	    			1
+	    		);
+	    	
+			mike.logs.log(3, 'запись в оркестратор вставлена', CONSTANTS.dwi_title_lvl, 'nf3_docs_dwi', p_id_job);
+		
 		EXCEPTION
 	    	WHEN OTHERS THEN
 	    		error_message := SUBSTR(SQLERRM, 1, 256);
 	    	
-	    		mike.logs.log(3, 'error = ' || error_message, CONSTANTS.dwi_title_lvl, 'nf3_docs_dwi', p_id_job);
-		END;
+	    		mike.logs.log(4, 'error = ' || error_message, CONSTANTS.dwi_title_lvl, 'nf3_docs_dwi', p_id_job);
+		
+	    		mike.orchestrator.insert_into_orchestrator(
+	    			CONSTANTS.table_source_title_3nf_docs,
+	    			-1,
+	    			CONSTANTS.dwi_title_lvl,
+	    			p_id_job,
+	    			1
+	    		);	
+	    END;
 	END;
 
 	PROCEDURE nf3_hp_dwi(
@@ -307,12 +359,32 @@ CREATE OR REPLACE PACKAGE BODY mike.dwi IS
 			FROM mike.human_params;
 		
 			mike.logs.log(2, 'загрузка hp в DSRC завершена', CONSTANTS.dwi_title_lvl, 'nf3_hp_dwi', p_id_job);	
+		
+			mike.orchestrator.insert_into_orchestrator(
+	    			CONSTANTS.table_source_title_3nf_hp,
+	    			1,
+	    			CONSTANTS.dwi_title_lvl,
+	    			p_id_job,
+	    			1
+	    		);
+	    	
+			mike.logs.log(3, 'запись в оркестратор вставлена', CONSTANTS.dwi_title_lvl, 'nf3_hp_dwi', p_id_job);
+		
+			
 		EXCEPTION
 	    	WHEN OTHERS THEN
 	    		error_message := SUBSTR(SQLERRM, 1, 256);
 	    	
-	    		mike.logs.log(3, 'error = ' || error_message, CONSTANTS.dwi_title_lvl, 'nf3_hp_dwi', p_id_job);
-		END;
+	    		mike.logs.log(4, 'error = ' || error_message, CONSTANTS.dwi_title_lvl, 'nf3_hp_dwi', p_id_job);
+		
+	    		mike.orchestrator.insert_into_orchestrator(
+	    			CONSTANTS.table_source_title_3nf_hp,
+	    			-1,
+	    			CONSTANTS.dwi_title_lvl,
+	    			p_id_job,
+	    			1
+	    		);	
+	    END;
 	END;
 END;
 

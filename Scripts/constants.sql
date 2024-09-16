@@ -19,6 +19,26 @@ CREATE OR REPLACE PACKAGE mike.CONSTANTS AS
 END;
 
 -- тест
---BEGIN
---	dbms_output.put_line(mike.CONSTANTS.table_source_title_3nf_hp);
---END;
+/*
+
+BEGIN
+	dbms_output.put_line(mike.CONSTANTS.dwi_title_lvl);
+END;
+
+*/
+
+DECLARE 
+l_id_job NUMBER;
+BEGIN
+SELECT nvl(min(j_n), -1)
+			INTO l_id_job
+			FROM (
+				SELECT job_number j_n
+				FROM mike.orchestrator_alfa
+				WHERE staging_lvl = mike.CONSTANTS.dwi_title_lvl AND is_successful = 1 AND need_process = 1
+				MINUS 
+				SELECT job_number j_n
+				FROM mike.orchestrator_alfa
+				WHERE staging_lvl = mike.CONSTANTS.dws_title_lvl
+			);
+END;
