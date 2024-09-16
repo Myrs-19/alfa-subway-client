@@ -16,6 +16,9 @@ CREATE OR REPLACE PACKAGE mike.CONSTANTS AS
 	table_source_title_3nf_docs VARCHAR2(256 CHAR) := 'documents';
 	table_source_title_3nf_hp VARCHAR2(256 CHAR) := 'human_params';
 
+	-- название измерения
+	dimension_client_title VARCHAR2(256 CHAR) := 'client';
+
 END;
 
 -- тест
