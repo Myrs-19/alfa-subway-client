@@ -52,3 +52,19 @@ BEGIN
 
 	dbms_output.put_line(j);
 END;
+
+
+
+DECLARE
+	c NUMBER;
+BEGIN
+	SELECT 1 
+	INTO c
+	FROM dual;
+
+	IF c = 1 THEN
+		dbms_output.put_line('here');
+	END IF;
+END;
+
+

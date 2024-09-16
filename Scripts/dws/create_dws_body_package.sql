@@ -17,11 +17,14 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 			FROM (
 				SELECT job_number j_n
 				FROM mike.orchestrator_alfa
-				WHERE staging_lvl = mike.CONSTANTS.dwi_title_lvl AND is_successful = 1 AND need_process = 1
+				WHERE staging_lvl = mike.CONSTANTS.dwi_title_lvl 
+					AND is_successful = 1 
+					AND need_process = 1
 				MINUS 
 				SELECT job_number j_n
 				FROM mike.orchestrator_alfa
-				WHERE staging_lvl = mike.CONSTANTS.dws_title_lvl
+				WHERE staging_lvl = mike.CONSTANTS.dws_title_lvl 
+					AND is_successful = 1
 			);
 			
 			mike.logs.log(1, 'запуск dws уровня', CONSTANTS.dws_title_lvl, 'wrap_dws', l_id_job);	
