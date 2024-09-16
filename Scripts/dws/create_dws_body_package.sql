@@ -1918,19 +1918,19 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 		BEGIN -- для отлавливания ошибок
 			mike.logs.log(1, 'запуск уровня dws для таблицы hp_002', CONSTANTS.dws_title_lvl, 'wrap_hp_002_dws', p_id_job);
 		
-			mike.dws.PN_002_dws_double(p_id_job);
+			mike.dws.hp_002_dws_double(p_id_job);
 		
 			mike.logs.log(2, 'завершена обработка дублей', CONSTANTS.dws_title_lvl, 'wrap_hp_002_dws', p_id_job);
 		
-			mike.dws.PN_002_dws_pk_to_nk(p_id_job);
+			mike.dws.hp_002_dws_pk_to_nk(p_id_job);
 		
 			mike.logs.log(3, 'завершено формирование nk', CONSTANTS.dws_title_lvl, 'wrap_hp_002_dws', p_id_job);
 		
-			mike.dws.PN_002_dws_delta(p_id_job);
+			mike.dws.hp_002_dws_delta(p_id_job);
 		
 			mike.logs.log(4, 'завершено формирование delta', CONSTANTS.dws_title_lvl, 'wrap_hp_002_dws', p_id_job);
 		
-			mike.dws.PN_002_dws_mirror(p_id_job);
+			mike.dws.hp_002_dws_mirror(p_id_job);
 		
 			mike.logs.log(5, 'завершено формирование mirror', CONSTANTS.dws_title_lvl, 'wrap_hp_002_dws', p_id_job);
 		
