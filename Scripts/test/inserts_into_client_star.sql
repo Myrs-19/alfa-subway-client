@@ -36,9 +36,9 @@ INSERT INTO mike.star_client(
 	height -- рост человека
 )
 SELECT 
-	2,
+	1,
 	't',
-	sysdate,
+	DATE '2021-01-01',
 	1,
 	'1',
 	'11',
@@ -76,6 +76,19 @@ where rowid = (
 
 SELECT * FROM mike.star_client;
 
+-- +7(ххх)ххх-хх-хх
+-- ххх-ххх-ххх хх
+UPDATE mike.star_client SET 
+	phone = '+7(999)655-11-11',
+	inn = '123-123-111 11';
+
+UPDATE mike.star_client SET 
+	birthday = DATE '2020-01-01'
+WHERE id = 1;
+
+UPDATE mike.star_client SET 
+	birthday = DATE '2003-01-25'
+WHERE id = 2;
 
 
 

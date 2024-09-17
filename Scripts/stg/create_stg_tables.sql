@@ -25,8 +25,8 @@ CREATE TABLE STG.CLIENT_CDELTA (
 	name varchar2(128 CHAR), -- имя человека
 	birthday DATE, -- день рождения человека
 	age NUMBER, -- возраст человека
-	phone VARCHAR2(16 CHAR), -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
-	inn VARCHAR2(14 CHAR), -- инн человека (формат - ххх-ххх-ххх хх)
+	phone NUMBER, -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
+	inn NUMBER, -- инн человека (формат - ххх-ххх-ххх хх)
 	pasport NUMBER, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
 	weight REAL, -- вес человека 
 	height REAL-- рост человека
@@ -82,8 +82,8 @@ CREATE TABLE STG.CLIENT_CONTEXT (
 	name varchar2(128 CHAR), -- имя человека
 	birthday DATE, -- день рождения человека
 	age NUMBER, -- возраст человека
-	phone VARCHAR2(16 CHAR), -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
-	inn VARCHAR2(14 CHAR), -- инн человека (формат - ххх-ххх-ххх хх)
+	phone NUMBER, -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
+	inn NUMBER, -- инн человека (формат - ххх-ххх-ххх хх)
 	pasport NUMBER, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
 	weight REAL, -- вес человека 
 	height REAL-- рост человека
@@ -98,6 +98,7 @@ SELECT * FROM STG.CLIENT_CONTEXT;
 -- wdelta
 -- выполнять под test
 -- drop table STG.CLIENT_WDELTA;
+
 CREATE TABLE STG.CLIENT_WDELTA (
 	-- ключи dwh
 	uk NUMBER, -- унифицированный ключ измерения в dwh
@@ -112,8 +113,8 @@ CREATE TABLE STG.CLIENT_WDELTA (
 	name varchar2(128 CHAR), -- имя человека
 	birthday DATE, -- день рождения человека
 	age NUMBER, -- возраст человека
-	phone VARCHAR2(16 CHAR), -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
-	inn VARCHAR2(14 CHAR), -- инн человека (формат - ххх-ххх-ххх хх)
+	phone NUMBER, -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
+	inn NUMBER, -- инн человека (формат - ххх-ххх-ххх хх)
 	pasport NUMBER, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
 	weight REAL, -- вес человека 
 	height REAL-- рост человека

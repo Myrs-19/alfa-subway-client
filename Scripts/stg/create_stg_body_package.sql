@@ -75,13 +75,12 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 
 	-- маппинг источника с кодом 001
 	-- звезда
+	-- маппинг - сначала валидация и трансформация
 	PROCEDURE mapping_001(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
-	BEGIN
-		dbms_output.put_line('todo');
-	END;
+	x
 
 	-- маппинг источника с кодом 002
 	PROCEDURE mapping_002(
