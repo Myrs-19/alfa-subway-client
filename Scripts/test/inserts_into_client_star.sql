@@ -87,7 +87,7 @@ UPDATE mike.star_client SET
 WHERE id = 1;
 
 UPDATE mike.star_client SET 
-	birthday = DATE '2003-01-25'
+	inn = '123-456-123 41'
 WHERE id = 2;
 
 

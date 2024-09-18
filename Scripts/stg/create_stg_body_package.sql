@@ -187,7 +187,13 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	)
 	IS
 	BEGIN
-		dbms_output.put_line('todo');
+		uni_record(p_id_job);
+		
+		mike.logs.log(1, 'унификация записи завершена', CONSTANTS.stg_title_lvl, 'wrap_ucontext', p_id_job);
+		
+		context(p_id_job);
+		
+		mike.logs.log(2, 'формирование контекста завершено', CONSTANTS.stg_title_lvl, 'wrap_ucontext', p_id_job);
 	END;
 
 	-- унификация записи
@@ -197,7 +203,66 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	)
 	IS
 	BEGIN
-		dbms_output.put_line('todo');
+		-- очищаем промежуточную таблицу
+		DELETE FROM mike.staging_uni_record;
+	
+		mike.logs.log(1, 'очистили промежуточную таблицу', CONSTANTS.stg_title_lvl, 'uni_record', p_id_job);
+		
+		INSERT INTO mike.staging_uni_record(
+			nk,
+			uk,
+			
+			dwsjob,
+			manual,
+			
+			inn
+		)
+		SELECT
+			-- ключи dwh
+			cdelta.nk,
+			mike.key_dwh.nextval uk,
+				
+			-- метаполя
+			cdelta.dwsjob,
+			cdelta.manual,
+				
+			cdelta.inn
+		FROM (
+			SELECT 
+				cdelta.nk, 
+				cdelta.dwsjob, 
+				'N' manual,
+					
+				cdelta.inn
+			FROM STG.CLIENT_CDELTA cdelta
+			LEFT JOIN STG.CLIENT_UKLINK uklink 
+				ON uklink.nk = cdelta.nk AND cdelta.dwsjob = p_id_job
+			WHERE uklink.uk IS NULL AND cdelta.inn IS NOT NULL 
+		) cdelta;
+	
+		mike.logs.log(2, 'вставили записи в промежуточную таблицу', CONSTANTS.stg_title_lvl, 'uni_record', p_id_job);
+	
+		INSERT INTO STG.CLIENT_UKLINK (
+			-- ключи dwh
+			nk, -- целочисленный ключ dwh
+			uk, -- унифицированный ключ измерения в dwh
+			
+			-- метаполя
+			dwsjob, -- идентификатор загрузки, в рамках которой произошло изменение записи
+			manual -- флаг ручной унификации записи ('Y' - вручную, 'N' - иначе)
+		)
+		SELECT 
+			-- ключи dwh
+			nk, -- целочисленный ключ dwh
+			max(uk) OVER(PARTITION BY inn), -- унифицированный ключ измерения в dwh
+			
+			-- метаполя
+			dwsjob, -- идентификатор загрузки, в рамках которой произошло изменение записи
+			manual -- флаг ручной унификации записи ('Y' - вручную, 'N' - иначе)
+		FROM 
+			mike.staging_uni_record;
+		
+		mike.logs.log(3, 'вставили в новые записи в uklink, унификация записи завершена', CONSTANTS.stg_title_lvl, 'uni_record', p_id_job);
 	END;
 
 	-- создание контекста
