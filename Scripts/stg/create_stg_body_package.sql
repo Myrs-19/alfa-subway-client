@@ -45,7 +45,7 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 				mike.orchestrator.insert_into_orchestrator(
 	    			CONSTANTS.dimension_client_title,
 	    			1,
-	    			CONSTANTS.dws_title_lvl,
+	    			CONSTANTS.stg_title_lvl,
 	    			l_id_job,
 	    			1
 	    		);	
@@ -234,9 +234,13 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 				'N' manual,
 					
 				cdelta.inn
-			FROM STG.CLIENT_CDELTA cdelta
+			FROM (
+				SELECT *
+				FROM STG.CLIENT_CDELTA cdelta
+				WHERE cdelta.dwsjob = p_id_job
+			) cdelta
 			LEFT JOIN STG.CLIENT_UKLINK uklink 
-				ON uklink.nk = cdelta.nk AND cdelta.dwsjob = p_id_job
+				ON uklink.nk = cdelta.nk
 			WHERE uklink.uk IS NULL AND cdelta.inn IS NOT NULL 
 		) cdelta;
 	
@@ -261,8 +265,23 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 			manual -- флаг ручной унификации записи ('Y' - вручную, 'N' - иначе)
 		FROM 
 			mike.staging_uni_record;
+
+		mike.logs.log(3, 'вставили в новые записи в uklink', CONSTANTS.stg_title_lvl, 'uni_record', p_id_job);
 		
-		mike.logs.log(3, 'вставили в новые записи в uklink, унификация записи завершена', CONSTANTS.stg_title_lvl, 'uni_record', p_id_job);
+		MERGE INTO STG.CLIENT_UKLINK uklink
+		USING (
+			SELECT *
+			FROM STG.CLIENT_CDELTA cdelta
+			WHERE dwsuniact = 'U' AND cdelta.dwsjob = p_id_job
+		) cdelta
+		ON (
+			cdelta.nk = uklink.nk
+		)
+		WHEN MATCHED THEN
+		UPDATE SET 
+			uk = mike.key_dwh.nextval;
+		
+		mike.logs.log(4, 'обновили uk для dwsuniact = U, унификация записи завершена', CONSTANTS.stg_title_lvl, 'uni_record', p_id_job);
 	END;
 
 	-- создание контекста
@@ -271,7 +290,101 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	)
 	IS
 	BEGIN
-		dbms_output.put_line('todo');
+		MERGE INTO STG.CLIENT_CONTEXT context
+		USING (
+			-- выбираем записи из дельты из текущей выгрузки
+			SELECT cdelta.*, uklink.uk
+			FROM (
+				SELECT * 
+				FROM STG.CLIENT_CDELTA cdelta
+				WHERE dwsjob = p_id_job
+			) cdelta 
+			JOIN STG.CLIENT_UKLINK uklink ON uklink.nk = cdelta.nk
+		) cdelta
+		ON (
+			cdelta.nk = context.nk
+		)
+		WHEN MATCHED THEN 
+		UPDATE SET
+			context.uk = cdelta.uk, -- унифицированный ключ измерения в dwh
+			
+			-- метаполя
+			context.dwsjob = cdelta.dwsjob, -- идентификатор загрузки, в рамках которой произошло изменение записи
+			
+			context.dwsarchive = decode(
+				cdelta.dwsact,
+				'D', 'D',
+				NULL
+			), -- признак удаленной записи ('D' - удалена, NULL - иначе)
+			context.dwsuniact = 'N', -- признак необходимости переунификации записи 
+										-- ('I' - новая и необходима унификация,
+										--	'U' - необходима переунификация,
+										--	'N' - унификация не требуется)
+			context.manual = 'N', -- флаг ручной унификации записи ('Y' - вручную, 'N' - иначе)
+			
+			-- поля атрибутов измерения
+			context.id = cdelta.id, -- идентификатор человека
+			context.name = cdelta.name, -- имя человека
+			context.birthday = cdelta.birthday, -- день рождения человека
+			context.age = cdelta.age, -- возраст человека
+			context.phone = cdelta.phone, -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
+			context.inn = cdelta.inn, -- инн человека (формат - ххх-ххх-ххх хх)
+			context.pasport = cdelta.pasport, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
+			context.weight = cdelta.weight, -- вес человека 
+			context.height = cdelta.height -- рост человека
+		WHEN NOT MATCHED THEN
+		INSERT (
+			-- ключи dwh
+			context.nk, -- целочисленный ключ dwh
+			context.uk, -- унифицированный ключ измерения в dwh
+			-- метаполя
+			context.dwseid, -- идентификатор исходной таблицы-источника записи
+			context.dwsjob, -- идентификатор загрузки, в рамках которой произошло изменение записи
+			
+			context.dwsarchive, -- признак удаленной записи ('D' - удалена, NULL - иначе)
+			context.dwsuniact, -- признак необходимости переунификации записи 
+										-- ('I' - новая и необходима унификация,
+										--	'U' - необходима переунификация,
+										--	'N' - унификация не требуется)
+			context.manual, -- флаг ручной унификации записи ('Y' - вручную, 'N' - иначе)
+			-- поля атрибутов измерения
+			context.id, -- идентификатор человека
+			context.name, -- имя человека
+			context.birthday, -- день рождения человека
+			context.age, -- возраст человека
+			context.phone, -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
+			context.inn, -- инн человека (формат - ххх-ххх-ххх хх)
+			context.pasport, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
+			context.weight, -- вес человека 
+			context.height -- рост человека
+		)
+		VALUES (
+			-- ключи dwh
+			cdelta.nk, -- целочисленный ключ dwh
+			cdelta.uk, -- унифицированный ключ измерения в dwh
+			-- метаполя
+			cdelta.dwseid, -- идентификатор исходной таблицы-источника записи
+			cdelta.dwsjob, -- идентификатор загрузки, в рамках которой произошло изменение записи
+			
+			NULL, -- признак удаленной записи ('D' - удалена, NULL - иначе)
+			'N', -- признак необходимости переунификации записи 
+										-- ('I' - новая и необходима унификация,
+										--	'U' - необходима переунификация,
+										--	'N' - унификация не требуется)
+			'N', -- флаг ручной унификации записи ('Y' - вручную, 'N' - иначе)
+			-- поля атрибутов измерения
+			cdelta.id, -- идентификатор человека
+			cdelta.name, -- имя человека
+			cdelta.birthday, -- день рождения человека
+			cdelta.age, -- возраст человека
+			cdelta.phone, -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
+			cdelta.inn, -- инн человека (формат - ххх-ххх-ххх хх)
+			cdelta.pasport, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
+			cdelta.weight, -- вес человека 
+			cdelta.height -- рост человека
+		);
+	
+		mike.logs.log(1, 'формирование контекста завершено', CONSTANTS.stg_title_lvl, 'context', p_id_job);
 	END;
 
 	-- унификация атрибутов и создание контексной дельты

@@ -91,4 +91,8 @@ UPDATE mike.star_client SET
 WHERE id = 2;
 
 
+UPDATE mike.star_client SET 
+	inn = '123-456-000 41'
+WHERE id = 1;
+
 
