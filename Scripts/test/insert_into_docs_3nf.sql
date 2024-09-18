@@ -33,3 +33,18 @@ INSERT INTO mike.documents(
 );
 
 SELECT * FROM mike.documents;
+
+UPDATE mike.documents
+SET
+	inn = 12345678911
+WHERE id = 1;
+
+UPDATE mike.documents
+SET
+	inn = 12345612341
+WHERE id = 2;
+
+UPDATE mike.documents
+SET
+	inn = 12332178911
+WHERE id = 3;

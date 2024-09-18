@@ -39,3 +39,18 @@ INSERT INTO mike.phone_numbers (
 );
 
 SELECT * FROM mike.phone_numbers;
+
+UPDATE mike.phone_numbers
+SET
+	phone = '72345678911'
+WHERE id = 1;
+
+UPDATE mike.phone_numbers
+SET
+	phone = '72345671234'
+WHERE id = 2;
+
+UPDATE mike.phone_numbers
+SET
+	phone = '72341328911'
+WHERE id = 3;
