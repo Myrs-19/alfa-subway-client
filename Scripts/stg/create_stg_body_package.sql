@@ -434,13 +434,13 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 			v_w.height -- рост человека
 		FROM mike.v_wdelta_I v_w;
 		
-		mike.logs.log(1, 'обработка для случая dwsact = i завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+		mike.logs.log(1, 'обработка для случая dwsact = I завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 
 		MERGE INTO STG.CLIENT_WDELTA wdelta
 		USING (
 			SELECT *
 			FROM v_wdelta_U
-		) v_w--todo VIEW
+		) v_w
 		ON (v_w.uk = wdelta.uk)
 		WHEN MATCHED THEN UPDATE SET 
 			wdelta.dwsact = 'U',
@@ -456,11 +456,18 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 			wdelta.height = v_w.height -- рост человека
 		;
 		
-		mike.logs.log(2, 'обработка для случая dwsact = u завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+		mike.logs.log(2, 'обработка для случая dwsact = U завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 
-		
+		MERGE INTO STG.CLIENT_WDELTA wdelta
+		USING (
+			SELECT *
+			FROM v_wdelta_D
+		) v_w
+		ON (v_w.uk = wdelta.uk)
+		WHEN MATCHED THEN UPDATE SET 
+			wdelta.dwsact = 'D';
 	
-		mike.logs.log(3, 'обработка для случая dwsact = u завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+		mike.logs.log(3, 'обработка для случая dwsact = D завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 		
 		mike.logs.log(4, 'формирование контексной дельты завершено', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 	END;

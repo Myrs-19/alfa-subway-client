@@ -49,12 +49,12 @@ FROM (
 			SELECT 1
 			FROM (
 				SELECT uk, dwsarchive
-				FROM STG.CLIENT_CONTEXT context_inner
+				FROM STG.CLIENT_CONTEXT context_inner1
 				GROUP BY uk, dwsarchive
 			) context_inner
 			WHERE context_inner.uk = context.uk
-			GROUP BY dwsarchive
-			HAVING count(dwsarchive) = 2
+			GROUP BY uk
+			HAVING count(*) = 2
 		)
 	GROUP BY context.uk
 ) wdelta_possible_changed
