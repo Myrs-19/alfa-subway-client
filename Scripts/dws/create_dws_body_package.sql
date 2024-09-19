@@ -825,7 +825,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 			FROM (
 				SELECT dsrc_pi.*, dsrc_docs.inn
 				FROM DWI002_3NF.personal_information002_DSRC dsrc_pi
-				JOIN DWI002_3NF.documents002_DSRC dsrc_docs
+				LEFT JOIN DWI002_3NF.documents002_DSRC dsrc_docs
 					ON dsrc_docs.id = dsrc_pi.id 
 						AND dsrc_docs.dwsjob = p_id_job
 						AND dsrc_pi.dwsjob = p_id_job
@@ -903,7 +903,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 			FROM (
 				SELECT dsrc_pi.*, dsrc_docs.inn
 				FROM DWI002_3NF.personal_information002_DSRC dsrc_pi
-				JOIN DWI002_3NF.documents002_DSRC dsrc_docs
+				LEFT JOIN DWI002_3NF.documents002_DSRC dsrc_docs
 					ON dsrc_docs.id = dsrc_pi.id 
 						AND dsrc_docs.dwsjob = p_id_job
 						AND dsrc_pi.dwsjob = p_id_job
@@ -918,7 +918,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 					AND double.name = dsrc.name
 					AND double.birthday = dsrc.birthday
 					AND double.age = dsrc.age
-			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
+			WHERE dsrc.dwsjob = p_id_job AND (double.effective_flag = 'Y' OR double.id IS NULL)
 			-- для тех записей у которых все поля одинаковы
 			GROUP BY
 				dsrc.id,
@@ -984,7 +984,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 			FROM (
 				SELECT dsrc_pi.*, dsrc_docs.inn
 				FROM DWI002_3NF.personal_information002_DSRC dsrc_pi
-				JOIN DWI002_3NF.documents002_DSRC dsrc_docs
+				LEFT JOIN DWI002_3NF.documents002_DSRC dsrc_docs
 					ON dsrc_docs.id = dsrc_pi.id 
 						AND dsrc_docs.dwsjob = p_id_job
 						AND dsrc_pi.dwsjob = p_id_job
@@ -999,7 +999,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 					AND double.name = dsrc.name
 					AND double.birthday = dsrc.birthday
 					AND double.age = dsrc.age
-			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
+			WHERE dsrc.dwsjob = p_id_job AND (double.effective_flag = 'Y' OR double.id IS NULL)
 			-- для тех записей у которых все поля одинаковы
 			GROUP BY
 				dsrc.id,
@@ -1355,7 +1355,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 				ON 
 					double.id = dsrc.id 
 					AND double.phone = dsrc.phone
-			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
+			WHERE dsrc.dwsjob = p_id_job AND (double.effective_flag = 'Y' OR double.id IS NULL)
 			-- для тех записей у которых все поля одинаковы
 			GROUP BY
 				dsrc.id,
@@ -1422,7 +1422,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 				ON 
 					double.id = dsrc.id 
 					AND double.phone = dsrc.phone
-			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
+			WHERE dsrc.dwsjob = p_id_job AND (double.effective_flag = 'Y' OR double.id IS NULL)
 			-- для тех записей у которых все поля одинаковы
 			GROUP BY
 				dsrc.id,
@@ -1770,7 +1770,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 					double.id = dsrc.id 
 					AND double.pasport = dsrc.pasport
 					AND double.inn = dsrc.inn
-			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
+			WHERE dsrc.dwsjob = p_id_job AND (double.effective_flag = 'Y' OR double.id IS NULL)
 			-- для тех записей у которых все поля одинаковы
 			GROUP BY
 				dsrc.id,
@@ -1837,7 +1837,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 					double.id = dsrc.id 
 					AND double.inn = dsrc.inn
 					AND double.pasport = dsrc.pasport
-			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
+			WHERE dsrc.dwsjob = p_id_job AND (double.effective_flag = 'Y' OR double.id IS NULL)
 			-- для тех записей у которых все поля одинаковы
 			GROUP BY
 				dsrc.id,
@@ -2198,7 +2198,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 					double.id = dsrc.id 
 					AND double.weight = dsrc.weight
 					AND double.height = dsrc.height
-			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
+			WHERE dsrc.dwsjob = p_id_job AND (double.effective_flag = 'Y' OR double.id IS NULL)
 			-- для тех записей у которых все поля одинаковы
 			GROUP BY
 				dsrc.id,
@@ -2271,7 +2271,7 @@ CREATE OR REPLACE PACKAGE BODY mike.dws IS
 					double.id = dsrc.id 
 					AND double.weight = dsrc.weight
 					AND double.height = dsrc.height
-			WHERE dsrc.dwsjob = p_id_job AND double.effective_flag = 'Y' OR double.id IS null
+			WHERE dsrc.dwsjob = p_id_job AND (double.effective_flag = 'Y' OR double.id IS NULL)
 			-- для тех записей у которых все поля одинаковы
 			GROUP BY
 				dsrc.id,

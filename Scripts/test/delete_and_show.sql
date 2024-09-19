@@ -1,15 +1,13 @@
 /*
 
 -- удаляем все
-delete from mike.orchestrator_alfa;
-delete from mike.LOGS_ALFA;
+delete from mike.orchestrator_alfa
+where STAGING_LVL = 'dws';
+delete from mike.LOGS_ALFA
+where STAGING_DWH_LVL = 'dws';
 
 -- dwi
-delete FROM DWI001_STAR.client001_DSRC;
-delete FROM DWI002_3NF.personal_information002_DSRC;
-delete FROM DWI002_3NF.phone_numbers002_DSRC;
-delete FROM DWI002_3NF.documents002_DSRC;
-delete FROM DWI002_3NF.human_params002_DSRC;
+
 
 -- dws
 -- star clnt
@@ -43,21 +41,18 @@ delete from DWS002_3NF.hp001_DELTA;
 delete FROM DWS002_3NF.hp001_MIRROR;
 
 -- stg
-delete FROM STG.CLIENT_CDELTA;
-delete FROM STG.CLIENT_UKLINK;
-delete FROM STG.CLIENT_CONTEXT;
-delete FROM STG.CLIENT_WDELTA;
 
 */
 
 -- выполнение всего staging dwh
 BEGIN
-	mike.dwi.wrap_dwi();
-	mike.dws.wrap_dws();
+	--mike.dwi.wrap_dwi();
+	--mike.dws.wrap_dws();
 	mike.stg.wrap_stg();
 END;
 
-SELECT * from mike.orchestrator_alfa;
+SELECT * from mike.orchestrator_alfa
+ORDER BY JOB_NUMBER desc, STAGING_LVL;
 
 SELECT * from mike.LOGS_ALFA
 ORDER BY id_job DESC, STAGING_DWH_LVL DESC, PROGRAM_TITLE DESC, num ASC;
