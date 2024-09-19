@@ -42,16 +42,25 @@ delete from DWS002_3NF.hp001_NKLINK;
 delete from DWS002_3NF.hp001_DELTA;
 delete FROM DWS002_3NF.hp001_MIRROR;
 
+-- stg
+delete FROM STG.CLIENT_CDELTA;
+delete FROM STG.CLIENT_UKLINK;
+delete FROM STG.CLIENT_CONTEXT;
+delete FROM STG.CLIENT_WDELTA;
+
 */
 
-
+-- выполнение всего staging dwh
 BEGIN
 	mike.dwi.wrap_dwi();
 	mike.dws.wrap_dws();
+	mike.stg.wrap_stg();
 END;
 
 SELECT * from mike.orchestrator_alfa;
-SELECT * from mike.LOGS_ALFA;
+
+SELECT * from mike.LOGS_ALFA
+ORDER BY id_job DESC, STAGING_DWH_LVL DESC, PROGRAM_TITLE DESC, num ASC;
 
 -- source tables
 SELECT * FROM mike.personal_information;
@@ -105,7 +114,7 @@ SELECT * FROM DWS002_3NF.DOCS001_DOUBLE;
 -- nklink
 select * FROM DWS002_3NF.DOCS001_NKLINK;
 -- delta
-SELECT * FROM DWS002_3NF.DOCS001_DOUBLE;
+SELECT * FROM DWS002_3NF.DOCS001_DELTA;
 -- mirror
 SELECT * FROM DWS002_3NF.DOCS001_MIRROR;
 
@@ -118,3 +127,25 @@ select * FROM DWS002_3NF.HP001_NKLINK;
 SELECT * FROM DWS002_3NF.HP001_DELTA;
 -- mirror
 SELECT * FROM DWS002_3NF.HP001_MIRROR;
+
+
+-- stg
+
+-- cdelta
+SELECT * FROM STG.CLIENT_CDELTA;
+
+-- uklink
+SELECT * FROM STG.CLIENT_UKLINK;
+
+-- context
+SELECT * FROM STG.CLIENT_CONTEXT;
+
+-- wdelta
+SELECT * FROM STG.CLIENT_WDELTA;
+
+-- вьюхи для маппинга
+SELECT * FROM mike.V_MAP_001;
+SELECT * FROM mike.V_MAP_002;
+
+-- промежуточная таблица для унификации записи
+SELECT * FROM mike.staging_uni_record;

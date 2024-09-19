@@ -58,13 +58,33 @@ END;
 DECLARE
 	c NUMBER;
 BEGIN
-	SELECT 1 
-	INTO c
-	FROM dual;
-
-	IF c = 1 THEN
-		dbms_output.put_line('here');
-	END IF;
+			SELECT nvl(min(j_n), -1)
+			INTO c
+			FROM (
+				SELECT job_number j_n
+				FROM mike.orchestrator_alfa
+				WHERE staging_lvl = mike.CONSTANTS.dws_title_lvl 
+					AND is_successful = 1 
+					AND need_process = 1
+				MINUS 
+				SELECT job_number j_n
+				FROM mike.orchestrator_alfa
+				WHERE staging_lvl = 'mike.CONSTANTS.stg_title_lvl '
+					AND is_successful = 1
+			);
+		
+		dbms_output.put_line(c);
 END;
 
-
+MERGE INTO STG.CLIENT_UKLINK uklink
+USING (
+	SELECT *
+	FROM STG.CLIENT_CDELTA cdelta
+	WHERE dwsuniact = 'U'
+) cdelta
+ON (
+	cdelta.uk = uklink.uk
+)
+WHEN MATCHED THEN
+UPDATE SET 
+	uk = mike.key_dwh.nextval;

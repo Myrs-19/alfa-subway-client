@@ -39,8 +39,8 @@ INSERT INTO mike.personal_information (
 SELECT * FROM mike.personal_information;
 
 UPDATE mike.personal_information 
-	SET name = 'mike change'
-	WHERE id = 1;
+	SET name = 'z'
+	WHERE id = 2;
 
 DELETE FROM mike.personal_information 
 	WHERE id = 1;
