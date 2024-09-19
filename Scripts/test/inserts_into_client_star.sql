@@ -92,7 +92,7 @@ WHERE id = 2;
 
 
 UPDATE mike.star_client SET 
-	inn = '123-456-000 41'
+	name = 'updated name'
 WHERE id = 1;
 
 

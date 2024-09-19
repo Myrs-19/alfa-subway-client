@@ -393,7 +393,76 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	)
 	IS
 	BEGIN
-		dbms_output.put_line('todo');
+		INSERT INTO STG.CLIENT_WDELTA (
+			-- ключи dwh
+			uk, -- унифицированный ключ измерения в dwh
+			
+			-- метаполя
+			dwsact, -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
+			dwsemix, -- код сочетания исходных таблиц (внешний ключ на таблицу DWSEMIX)
+			dwsjob, -- идентификатор загрузки, в рамках которой произошло изменение записи
+			
+			-- поля атрибутов измерения
+			id, -- идентификатор человека
+			name, -- имя человека
+			birthday, -- день рождения человека
+			age, -- возраст человека
+			phone, -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
+			inn, -- инн человека (формат - ххх-ххх-ххх хх)
+			pasport, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
+			weight, -- вес человека 
+			height -- рост человека
+		)
+		SELECT 
+			-- ключи dwh
+			v_w.uk, -- унифицированный ключ измерения в dwh
+			
+			-- метаполя
+			'I', -- (‘I’, ‘U’, ‘D’ – добавление, изменение, удаление соответственно)
+			12, -- код сочетания исходных таблиц (внешний ключ на таблицу DWSEMIX)
+			p_id_job, -- идентификатор загрузки, в рамках которой произошло изменение записи
+			
+			-- поля атрибутов измерения
+			v_w.id, -- идентификатор человека
+			v_w.name, -- имя человека
+			v_w.birthday, -- день рождения человека
+			v_w.age, -- возраст человека
+			v_w.phone, -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
+			v_w.inn, -- инн человека (формат - ххх-ххх-ххх хх)
+			v_w.pasport, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
+			v_w.weight, -- вес человека 
+			v_w.height -- рост человека
+		FROM mike.v_wdelta_I v_w;
+		
+		mike.logs.log(1, 'обработка для случая dwsact = i завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+
+		MERGE INTO STG.CLIENT_WDELTA wdelta
+		USING (
+			SELECT *
+			FROM v_wdelta_U
+		) v_w--todo VIEW
+		ON (v_w.uk = wdelta.uk)
+		WHEN MATCHED THEN UPDATE SET 
+			wdelta.dwsact = 'U',
+			wdelta.dwsjob = p_id_job,
+			wdelta.id = v_w.id, -- идентификатор человека
+			wdelta.name = v_w.name, -- имя человека
+			wdelta.birthday = v_w.birthday, -- день рождения человека
+			wdelta.age = v_w.age, -- возраст человека
+			wdelta.phone = v_w.phone, -- номер телефона человека (формат - +7(ххх)ххх-хх-хх - строка)
+			wdelta.inn = v_w.inn, -- инн человека (формат - ххх-ххх-ххх хх)
+			wdelta.pasport = v_w.pasport, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
+			wdelta.weight = v_w.weight, -- вес человека 
+			wdelta.height = v_w.height -- рост человека
+		;
+		
+		mike.logs.log(2, 'обработка для случая dwsact = u завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+
+		
+	
+		mike.logs.log(3, 'обработка для случая dwsact = u завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+		
+		mike.logs.log(4, 'формирование контексной дельты завершено', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 	END;
 END;
 
