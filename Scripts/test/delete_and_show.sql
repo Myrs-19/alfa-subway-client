@@ -58,7 +58,9 @@ BEGIN
 END;
 
 SELECT * from mike.orchestrator_alfa;
-SELECT * from mike.LOGS_ALFA;
+
+SELECT * from mike.LOGS_ALFA
+ORDER BY id_job DESC, STAGING_DWH_LVL DESC, PROGRAM_TITLE DESC, num ASC;
 
 -- source tables
 SELECT * FROM mike.personal_information;

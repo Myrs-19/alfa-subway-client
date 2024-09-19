@@ -465,7 +465,8 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 		) v_w
 		ON (v_w.uk = wdelta.uk)
 		WHEN MATCHED THEN UPDATE SET 
-			wdelta.dwsact = 'D';
+			wdelta.dwsact = 'D',
+			wdelta.dwsjob = p_id_job;
 	
 		mike.logs.log(3, 'обработка для случая dwsact = D завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 		
