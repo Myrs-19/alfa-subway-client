@@ -2,9 +2,9 @@
 
 -- удаляем все
 delete from mike.orchestrator_alfa
-where STAGING_LVL = 'dws';
+where STAGING_LVL = 'dws' or STAGING_LVL = 'stg';
 delete from mike.LOGS_ALFA
-where STAGING_DWH_LVL = 'dws';
+where STAGING_DWH_LVL = 'dws' or STAGING_DWH_LVL = 'stg';
 
 -- dwi
 
@@ -41,13 +41,16 @@ delete from DWS002_3NF.hp001_DELTA;
 delete FROM DWS002_3NF.hp001_MIRROR;
 
 -- stg
-
+delete FROM STG.CLIENT_CDELTA;
+delete FROM STG.CLIENT_UKLINK;
+delete FROM STG.CLIENT_CONTEXT;
+delete FROM STG.CLIENT_WDELTA;
 */
 
 -- выполнение всего staging dwh
 BEGIN
 	--mike.dwi.wrap_dwi();
-	--mike.dws.wrap_dws();
+	mike.dws.wrap_dws();
 	mike.stg.wrap_stg();
 END;
 
