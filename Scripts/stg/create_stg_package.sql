@@ -40,4 +40,7 @@ CREATE OR REPLACE PACKAGE mike.stg AS
 	PROCEDURE uwdelta(
 		p_id_job NUMBER -- номер джоба
 	);
+
+	-- тестовая процедура
+	PROCEDURE test;
 END;

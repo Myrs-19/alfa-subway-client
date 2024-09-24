@@ -472,12 +472,23 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 		
 		mike.logs.log(4, 'формирование контексной дельты завершено', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 	END;
+
+	PROCEDURE test
+	IS
+	DECLARE 
+		v_d VALUE_DICT := VALUE_DICT();
+		d MYDICT := MYDICT();
+	BEGIN
+		v_d.extend(1);
+		v_d(1) := '1';
+		dbms_output.put_line(v_d(1));
+	END;
 END;
 
 /*
 
 begin
-	mike.stg.wrap_stg();
+	mike.stg.test();
 end;
 
  */
