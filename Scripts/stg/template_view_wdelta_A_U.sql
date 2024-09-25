@@ -33,7 +33,11 @@ FROM (
 		max(context.pasport) pasport, -- паспорт человека (сочетание номера и кода паспорта без пробелов и др знаков - только цифры)
 		max(context.weight) weight, -- вес человека 
 		max(context.height) height -- рост человека
-	FROM STG.CLIENT_CONTEXT context
+	FROM (
+		SELECT *
+		FROM STG.CLIENT_CONTEXT context
+		WHERE dwsarchive IS NULL
+	) context
 	JOIN STG.CLIENT_WDELTA wdelta
 		ON context.uk = wdelta.uk
 	WHERE 

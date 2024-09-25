@@ -13,3 +13,5 @@ CREATE TABLE mike.uni_attrs(
 	attr VARCHAR2(128 CHAR),
 	uni_type_attr VARCHAR2(1 CHAR)
 );
+
+SELECT * FROM mike.uni_attrs;
