@@ -474,7 +474,7 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	END;
 
 	-- создание вьюхи из таблицы с типами унификации для каждого атрибута
-	CREATE OR REPLACE PROCEDURE create_view_wdelta_A_I(
+	PROCEDURE create_view_wdelta_A_I(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
@@ -489,7 +489,7 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 		l_uni_type_attr varchar2(128 char); -- тип унификация для этого атрибута
 	
 		-- заголовок запроса для создания вьюхи
-		view_create_header varchar2(256 char) := 'CREATE OR REPLACE VIEW mike.v_wdelta_I AS ';
+		view_create_header varchar2(256 char) := 'CREATE OR REPLACE VIEW mike.v_wdelta_A_I AS ';
 	
 		-- список столбцов в селекте
 		list_select varchar2(1024 char) := 'SELECT context.uk uk, ';

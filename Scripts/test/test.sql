@@ -239,7 +239,7 @@ begin
 end;
 
 
-
+SELECT * FROM mike.v_wdelta_A_I;
 
 
 
