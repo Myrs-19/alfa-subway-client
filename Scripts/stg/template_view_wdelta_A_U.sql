@@ -1,11 +1,11 @@
--- TODO
+-- ШАБЛОН НА СОЗДАНИЕ ВЬЮХИ ДЛЯ УНИФИКАЦИИ АТРИБУТА C ТИПОМ АГРЕГАЦИИ
 
 -- вьюха для insert`а в wdelta, случай, когда dwsact = U
 -- то есть для тех у кого произошли изменения - из всех записей для какого-то uk: 
 --		удалилась запись для uk, 
 --		запись добавилась для uk, 
 --		запись изменилась для uk
-CREATE OR REPLACE VIEW mike.v_wdelta_U AS 
+CREATE OR REPLACE VIEW mike.v_wdelta_A_U AS 
 SELECT 
 	wdelta_possible_changed.uk uk,
 	
@@ -76,7 +76,7 @@ WHERE
 	OR (wdelta.height <> wdelta_possible_changed.height AND (wdelta.height IS NOT NULL OR wdelta_possible_changed.height IS NOT NULL))-- рост человека
 ;
 
-SELECT * FROM mike.v_wdelta_U;
+SELECT * FROM mike.v_wdelta_A_U;
 
 SELECT * FROM STG.CLIENT_CONTEXT;
 

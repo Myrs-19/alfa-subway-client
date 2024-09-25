@@ -540,6 +540,107 @@ GROUP BY context.uk';
 		
 		mike.logs.log(5, 'запрос выполнен', CONSTANTS.stg_title_lvl, 'create_view_wdelta_A_I', p_id_job);
 	END;
+
+	PROCEDURE create_view_wdelta_A_U(
+		p_id_job NUMBER -- номер джоба
+	)
+	IS
+		-- курсор, который проходит по записям из таблицы с типами унификации 
+		-- для каждого атрибута, у которых тип унификации = 'A' - агрегация
+		CURSOR c IS 
+			SELECT attr, uni_type_attr 
+			FROM mike.uni_attrs 
+			WHERE uni_type_attr = 'A';
+		
+		l_attr varchar2(128 char); -- название атрибута
+		l_uni_type_attr varchar2(128 char); -- тип унификация для этого атрибута
+	
+		-- заголовок запроса для создания вьюхи
+		view_create_header varchar2(256 char) := 'CREATE OR REPLACE VIEW mike.v_wdelta_A_U AS 
+SELECT 
+	wdelta_possible_changed.uk uk ';
+	
+		-- список столбцов в селекте
+		list_select varchar2(1024 char) := '';
+		-- список столбцов в селекте в подзапросе
+		list_inner_select varchar2(1024 char) := '';
+		-- статичное тело селекта
+		body_select varchar2(2048 char) := ' FROM STG.CLIENT_CONTEXT context
+	JOIN STG.CLIENT_WDELTA wdelta
+		ON context.uk = wdelta.uk
+	WHERE 
+		-- проверка на то, что все записи в контексте не удалены
+		-- то есть записи в контексте могли меняться, 
+		-- то есть либо вставится новая, либо измениться старая
+		EXISTS(
+			SELECT 1
+			FROM STG.CLIENT_CONTEXT context_inner
+			WHERE context_inner.uk = context.uk AND dwsarchive IS NULL
+		) 
+		OR 
+		-- проверка на то, что есть хотя бы одна удаленая запись для uk
+		EXISTS(
+			SELECT 1
+			FROM (
+				SELECT uk, dwsarchive
+				FROM STG.CLIENT_CONTEXT context_inner1
+				GROUP BY uk, dwsarchive
+			) context_inner
+			WHERE context_inner.uk = context.uk
+			GROUP BY uk
+			HAVING count(*) = 2
+		)
+	GROUP BY context.uk
+) wdelta_possible_changed
+JOIN STG.CLIENT_WDELTA wdelta
+	ON wdelta.uk = wdelta_possible_changed.uk
+WHERE ';
+		-- условие фильтра where запроса
+		condition_where_select varchar2(1024 char) := '';
+
+
+		-- итоговые сформированный запрос для создание вьюхи
+		result_create_view varchar2(10000 char);
+	BEGIN
+		-- открываем курсор по таблице с типами унификации
+		OPEN c;
+
+		mike.logs.log(1, 'курсор открыт', CONSTANTS.stg_title_lvl, 'create_view_wdelta_A_U', p_id_job);
+
+		-- проходим по таблицу и формируем столбцы в select 
+		LOOP
+			FETCH c INTO l_attr, l_uni_type_attr;
+			EXIT WHEN c%NOTFOUND;
+		
+			list_select := list_select || ' , wdelta_possible_changed.' || l_attr || ' ' || l_attr;
+			list_inner_select := list_inner_select || ' max(context.' || l_attr || ') ' || l_attr || ',';
+			condition_where_select := condition_where_select || ' ' || 'OR (wdelta.' || l_attr || ' <> wdelta_possible_changed.' || l_attr || ' AND (wdelta.' || l_attr || ' IS NOT NULL OR wdelta_possible_changed.' || l_attr || ' IS NOT NULL))';
+		END LOOP;
+
+		mike.logs.log(2, 'сформирован списки для селекта', CONSTANTS.stg_title_lvl, 'create_view_wdelta_A_U', p_id_job);
+
+		-- убираем последнюю запятую
+		list_inner_select := regexp_replace(list_inner_select, ',$', '');
+
+		-- убираем первый OR
+		condition_where_select := regexp_replace(condition_where_select, '^ OR', '');
+	
+		-- формируем запрос на создание вьюхи
+		result_create_view := view_create_header 
+							|| ' ' 
+							|| list_select 
+							|| ' FROM ( SELECT context.uk uk, ' 
+							|| list_inner_select
+							|| body_select
+							|| condition_where_select;
+	
+		mike.logs.log(3, 'сформирован итоговый запрос на создание вьюхи', CONSTANTS.stg_title_lvl, 'create_view_wdelta_A_U', p_id_job);
+						
+		EXECUTE IMMEDIATE result_create_view;
+	
+		mike.logs.log(4, 'запрос выполнен - вьюха создана', CONSTANTS.stg_title_lvl, 'create_view_wdelta_A_U', p_id_job);
+	END;
+
 END;
 
 /*

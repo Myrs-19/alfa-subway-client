@@ -46,4 +46,10 @@ CREATE OR REPLACE PACKAGE mike.stg AS
 	PROCEDURE create_view_wdelta_A_I(
 		p_id_job NUMBER -- номер джоба
 	);
+
+	-- создание вьюхи типа U из таблицы с типами унификации для каждого атрибута
+	-- для типа унификации атрибута - агрегация
+	PROCEDURE create_view_wdelta_A_U(
+		p_id_job NUMBER -- номер джоба
+	);
 END;
