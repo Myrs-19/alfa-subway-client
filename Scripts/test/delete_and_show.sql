@@ -8,7 +8,6 @@ where STAGING_DWH_LVL = 'dws' or STAGING_DWH_LVL = 'stg';
 
 -- dwi
 
-
 -- dws
 -- star clnt
 delete from DWS001_CLNT.CLIENT001_DOUBLE;
