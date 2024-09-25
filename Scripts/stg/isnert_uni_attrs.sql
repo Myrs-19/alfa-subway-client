@@ -5,7 +5,7 @@ SELECT * FROM mike.uni_attrs;
 --DELETE FROM mike.uni_attrs;
 
 INSERT INTO mike.uni_attrs(
-	attr, uni_attr
+	attr, uni_type_attr
 )
 SELECT 'ID', 'A' FROM dual
 UNION ALL

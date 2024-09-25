@@ -1,3 +1,5 @@
+-- ШАБЛОН НА СОЗДАНИЕ ВЬЮХИ ДЛЯ УНИФИКАЦИИ АТРИБУТА ТИПОМ АГРЕГАЦИИ
+
 -- вьюха для insert`а в wdelta, случай, когда dwsact = I
 -- то есть для новых uk
 CREATE OR REPLACE VIEW mike.v_wdelta_I AS 

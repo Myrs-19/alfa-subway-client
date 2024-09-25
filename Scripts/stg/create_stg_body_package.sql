@@ -473,22 +473,79 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 		mike.logs.log(4, 'формирование контексной дельты завершено', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 	END;
 
-	PROCEDURE test
+	-- создание вьюхи из таблицы с типами унификации для каждого атрибута
+	CREATE OR REPLACE PROCEDURE create_view_wdelta_A_I(
+		p_id_job NUMBER -- номер джоба
+	)
 	IS
-	DECLARE 
-		v_d VALUE_DICT := VALUE_DICT();
-		d MYDICT := MYDICT();
+		-- курсор, который проходит по записям из таблицы с типами унификации 
+		-- для каждого атрибута, у которых тип унификации = 'A' - агрегация
+		CURSOR c IS 
+			SELECT attr, uni_type_attr 
+			FROM mike.uni_attrs 
+			WHERE uni_type_attr = 'A';
+		
+		l_attr varchar2(128 char); -- название атрибута
+		l_uni_type_attr varchar2(128 char); -- тип унификация для этого атрибута
+	
+		-- заголовок запроса для создания вьюхи
+		view_create_header varchar2(256 char) := 'CREATE OR REPLACE VIEW mike.v_wdelta_I AS ';
+	
+		-- список столбцов в селекте
+		list_select varchar2(1024 char) := 'SELECT context.uk uk, ';
+		-- статичное тело селекта
+		body_select varchar2(2048 char) := '
+FROM STG.CLIENT_CONTEXT context
+LEFT JOIN STG.CLIENT_WDELTA wdelta
+	ON context.uk = wdelta.uk
+WHERE wdelta.uk IS NULL
+GROUP BY context.uk';
+		-- итоговые сформированный селект
+		result_select varchar2(2048 char);
+
+		-- итоговые сформированный запрос для создание вьюхи
+		result_create_view varchar2(2048 char);
 	BEGIN
-		v_d.extend(1);
-		v_d(1) := '1';
-		dbms_output.put_line(v_d(1));
+		-- открываем курсор по таблице с типами унификации
+		OPEN c;
+
+		mike.logs.log(1, 'курсор открыт', CONSTANTS.stg_title_lvl, 'create_view_wdelta_A_I', p_id_job);
+
+		-- проходим по таблицу и формируем столбцы в select 
+		LOOP
+			FETCH c INTO l_attr, l_uni_type_attr;
+			EXIT WHEN c%NOTFOUND;
+		
+			list_select := list_select || ' max(context.' || l_attr || ') ' || l_attr || ',';
+		END LOOP;
+
+		mike.logs.log(2, 'сформирован список столбцов для селекта', CONSTANTS.stg_title_lvl, 'create_view_wdelta_A_I', p_id_job);
+
+		-- убираем последнюю запятую
+		list_select := regexp_replace(list_select, ',$', '');
+
+		-- склеиваем список столбцов с телом запроса селекта
+		result_select := list_select || ' ' || body_select;
+
+		mike.logs.log(3, 'сформирован селект', CONSTANTS.stg_title_lvl, 'create_view_wdelta_A_I', p_id_job);
+	
+		-- формируем запрос на создание вьюхи
+		result_create_view := view_create_header || ' ' || result_select;
+	
+		
+		mike.logs.log(4, 'сформирован итоговый запрос на создание вьюхи', CONSTANTS.stg_title_lvl, 'create_view_wdelta_A_I', p_id_job);
+	
+		-- создаем вьюху
+		EXECUTE IMMEDIATE result_create_view;
+		
+		mike.logs.log(5, 'запрос выполнен', CONSTANTS.stg_title_lvl, 'create_view_wdelta_A_I', p_id_job);
 	END;
 END;
 
 /*
 
 begin
-	mike.stg.test();
+	mike.stg.create_view_wdelta_A_I(1);
 end;
 
  */
