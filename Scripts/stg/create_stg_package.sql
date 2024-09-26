@@ -64,4 +64,14 @@ CREATE OR REPLACE PACKAGE mike.stg AS
 	PROCEDURE create_view_wdelta_P_U(
 		p_id_job NUMBER -- номер джоба
 	);
+
+	-- создание итоговой вьюхи для случая I
+	PROCEDURE create_view_wdelta_I(
+		p_id_job NUMBER -- номер джоба
+	);
+
+	-- создание итоговой вьюхи для случая U
+	PROCEDURE create_view_wdelta_U(
+		p_id_job NUMBER -- номер джоба
+	);
 END;

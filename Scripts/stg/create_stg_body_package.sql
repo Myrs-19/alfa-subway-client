@@ -38,7 +38,7 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 			
 				mike.logs.log(3, 'выполнена унификация записи и создание контекста', CONSTANTS.stg_title_lvl, 'wrap_stg', l_id_job);
 			
-				--mike.stg.uwdelta(l_id_job);
+				mike.stg.uwdelta(l_id_job);
 			
 				mike.logs.log(4, 'выполнена унификация записи и создание контекста', CONSTANTS.stg_title_lvl, 'wrap_stg', l_id_job);
 			
@@ -393,6 +393,31 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	)
 	IS
 	BEGIN
+		
+--		mike.stg.create_view_wdelta_A_I(p_id_job);
+--		
+--		mike.logs.log(1, 'сформирована вьюха для A I', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+--		
+--		mike.stg.create_view_wdelta_A_U(p_id_job);
+--		
+--		mike.logs.log(2, 'сформирована вьюха для A U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+--		
+--		mike.stg.create_view_wdelta_P_I(p_id_job);
+--		
+--		mike.logs.log(3, 'сформирована вьюха для P I', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+--	
+--		mike.stg.create_view_wdelta_P_U(p_id_job);
+--		
+--		mike.logs.log(4, 'сформирована вьюха для P U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+--	
+--		mike.stg.create_view_wdelta_I(p_id_job);
+--		
+--		mike.logs.log(5, 'сформирована вьюха для U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+--	
+--		mike.stg.create_view_wdelta_U(p_id_job);
+--		
+--		mike.logs.log(6, 'сформирована вьюха для U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+--		
 		INSERT INTO STG.CLIENT_WDELTA (
 			-- ключи dwh
 			uk, -- унифицированный ключ измерения в dwh
@@ -434,7 +459,7 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 			v_w.height -- рост человека
 		FROM mike.v_wdelta_I v_w;
 		
-		mike.logs.log(1, 'обработка для случая dwsact = I завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+		mike.logs.log(7, 'обработка для случая dwsact = I завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 
 		MERGE INTO STG.CLIENT_WDELTA wdelta
 		USING (
@@ -456,7 +481,7 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 			wdelta.height = v_w.height -- рост человека
 		;
 		
-		mike.logs.log(2, 'обработка для случая dwsact = U завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+		mike.logs.log(8, 'обработка для случая dwsact = U завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 
 		MERGE INTO STG.CLIENT_WDELTA wdelta
 		USING (
@@ -468,9 +493,9 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 			wdelta.dwsact = 'D',
 			wdelta.dwsjob = p_id_job;
 	
-		mike.logs.log(3, 'обработка для случая dwsact = D завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+		mike.logs.log(9, 'обработка для случая dwsact = D завершена', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 		
-		mike.logs.log(4, 'формирование контексной дельты завершено', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+		mike.logs.log(10, 'формирование контексной дельты завершено', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
 	END;
 
 	-- создание вьюхи из таблицы с типами унификации для каждого атрибута
@@ -875,8 +900,7 @@ WHERE (wdelta.';
 										  ||
 							part_select_9 || l_attr || ' '
 										  || part_select_10;
-							
-										 
+												 
 			mike.logs.log(2, 'запрос для создание вьюхи сформирован', CONSTANTS.stg_title_lvl, 'create_view_wdelta_P_U', p_id_job);
 		
 			EXECUTE IMMEDIATE result_query;
@@ -885,12 +909,252 @@ WHERE (wdelta.';
 		END LOOP;
 	END;
 
+	-- создание итоговой вьюхи для случая I
+	PROCEDURE create_view_wdelta_I(
+		p_id_job NUMBER -- номер джоба
+	)
+	IS
+	-- курсор, который проходит по записям из таблицы с типами унификации 
+		-- для каждого атрибута, у которых тип унификации = 'A' - агрегация
+		CURSOR c IS 
+			SELECT attr, uni_type_attr 
+			FROM mike.uni_attrs;
+		
+		l_attr varchar2(128 char); -- название атрибута
+		l_uni_type_attr varchar2(128 char); -- тип унификация для этого атрибута
+	
+		header_view_1 varchar2(1000 CHAR) := 'CREATE OR REPLACE VIEW mike.v_wdelta_I AS 
+SELECT
+	-- ключи dwh
+	COALESCE( ';
+
+	-- список для выражения coalesce
+	list_coalesce varchar2(1000 CHAR) := '';
+
+	part_select_1 varchar2(1000 CHAR) := ') uk,';
+	
+	-- список столбцов
+	list_select_1 varchar2(1000 CHAR) := '';
+
+	-- список фром и джойнов
+	list_from varchar2(2000 CHAR) := ' FROM ';
+
+	-- список для джойнов
+	list_conditions_where varchar2(2000 CHAR) := ' WHERE ';
+
+	-- название текущей вьюхи
+	cur_view varchar2(1000 char) := '';
+
+	-- название предыдущей вьюхи
+	prev_view varchar2(1000 char) := '';
+
+	-- флаг начала цикла
+	f_st NUMBER := 1;
+
+	-- флаг, показывающий была уже возвращена вьюха агрегации или нет
+	f_attr_uni_type NUMBER := 0;
+
+	-- итоговый запрос
+	result_query varchar2(10000 char);
+	BEGIN
+		-- открываем курсор по таблице с типами унификации
+		OPEN c;
+
+		mike.logs.log(1, 'курсор открыт', CONSTANTS.stg_title_lvl, 'create_view_wdelta_I', p_id_job);
+
+		-- проходим по таблицу и формируем столбцы в select 
+		LOOP
+			FETCH c INTO l_attr, l_uni_type_attr;
+			EXIT WHEN c%NOTFOUND;
+		
+			-- формируем список столбцов селекта
+			list_select_1 := list_select_1 || l_attr || ',';
+		
+			-- если тип унификации агрегация
+			IF l_uni_type_attr = 'A' THEN
+				IF f_attr_uni_type = 0 THEN 
+					cur_view := 'mike.v_wdelta_A_I';
+					f_attr_uni_type := 1;
+				ELSE
+				-- если вьюха агрегации была уже возвращена, пропускаем итерацию
+				-- во вьюхе агрегация используется несколько столбцов, точнее все, который используют этот тип унификации
+				-- поэтому ее нужно вернуть только один раз
+					CONTINUE;
+				END IF;
+			
+			-- если тип унификации приоритет
+			ELSE
+				cur_view := 'mike.v_wdelta_P_I_' || l_attr;
+			END IF;
+		
+			-- формируем список выражения coalesce
+			list_coalesce := list_coalesce || cur_view || '.uk,';	
+		
+			IF f_st <> 1 THEN
+				list_from := list_from || ',' || cur_view;
+			ELSE 
+				list_from := list_from || cur_view;
+			END IF;
+
+			IF f_st = 0 THEN
+				list_conditions_where := list_conditions_where || ' ' || cur_view || '.uk = ' || prev_view || '.uk' || ' AND ';			
+			END IF;
+		
+			-- опускаем флаг первой итерации
+			f_st := 0;
+		
+			prev_view := cur_view;
+		END LOOP;
+
+		-- убираем лишнюю запятую в списке выражения coalesce	
+		list_coalesce := regexp_replace(list_coalesce, ',$');
+	
+		-- убираем лишнюю запятую в списке столбцов селекта
+		list_select_1 := regexp_replace(list_select_1, ',$');
+	
+		-- убираем последний AND в условии фильтрации
+		list_conditions_where := regexp_replace(list_conditions_where, 'AND $');
+	
+		result_query := header_view_1 
+						|| list_coalesce
+						|| part_select_1
+						|| list_select_1
+						|| list_from
+						|| list_conditions_where;
+	
+		mike.logs.log(2, 'сформирован итоговый запрос', CONSTANTS.stg_title_lvl, 'create_view_wdelta_I', p_id_job);
+					
+		EXECUTE IMMEDIATE result_query;
+		
+		mike.logs.log(3, 'запрос выполнен - вьюха создана', CONSTANTS.stg_title_lvl, 'create_view_wdelta_I', p_id_job);
+	END;
+
+	-- создание итоговой вьюхи для случая U
+	PROCEDURE create_view_wdelta_U(
+		p_id_job NUMBER -- номер джоба
+	)
+	IS
+	-- курсор, который проходит по записям из таблицы с типами унификации 
+		-- для каждого атрибута, у которых тип унификации = 'A' - агрегация
+		CURSOR c IS 
+			SELECT attr, uni_type_attr 
+			FROM mike.uni_attrs;
+		
+		l_attr varchar2(128 char); -- название атрибута
+		l_uni_type_attr varchar2(128 char); -- тип унификация для этого атрибута
+	
+		header_view_1 varchar2(1000 CHAR) := 'CREATE OR REPLACE VIEW mike.v_wdelta_U AS 
+SELECT
+	-- ключи dwh
+	COALESCE( ';
+
+	-- список для выражения coalesce
+	list_coalesce varchar2(1000 CHAR) := '';
+
+	part_select_1 varchar2(1000 CHAR) := ') uk,';
+	
+	-- список столбцов
+	list_select_1 varchar2(1000 CHAR) := '';
+
+	-- список фром и джойнов
+	list_from varchar2(2000 CHAR) := ' FROM ';
+
+	-- список для джойнов
+	list_conditions_where varchar2(2000 CHAR) := ' WHERE ';
+
+	-- название текущей вьюхи
+	cur_view varchar2(1000 char) := '';
+
+	-- название предыдущей вьюхи
+	prev_view varchar2(1000 char) := '';
+
+	-- флаг начала цикла
+	f_st NUMBER := 1;
+
+	-- флаг, показывающий была уже возвращена вьюха агрегации или нет
+	f_attr_uni_type NUMBER := 0;
+
+	-- итоговый запрос
+	result_query varchar2(10000 char);
+	BEGIN
+		-- открываем курсор по таблице с типами унификации
+		OPEN c;
+
+		mike.logs.log(1, 'курсор открыт', CONSTANTS.stg_title_lvl, 'create_view_wdelta_U', p_id_job);
+
+		-- проходим по таблицу и формируем столбцы в select 
+		LOOP
+			FETCH c INTO l_attr, l_uni_type_attr;
+			EXIT WHEN c%NOTFOUND;
+		
+			-- формируем список столбцов селекта
+			list_select_1 := list_select_1 || l_attr || ',';
+		
+			-- если тип унификации агрегация
+			IF l_uni_type_attr = 'A' THEN
+				IF f_attr_uni_type = 0 THEN 
+					cur_view := 'mike.v_wdelta_A_U';
+					f_attr_uni_type := 1;
+				ELSE
+				-- если вьюха агрегации была уже возвращена, пропускаем итерацию
+				-- во вьюхе агрегация используется несколько столбцов, точнее все, который используют этот тип унификации
+				-- поэтому ее нужно вернуть только один раз
+					CONTINUE;
+				END IF;
+			
+			-- если тип унификации приоритет
+			ELSE
+				cur_view := 'mike.v_wdelta_P_U_' || l_attr;
+			END IF;
+		
+			-- формируем список выражения coalesce
+			list_coalesce := list_coalesce || cur_view || '.uk,';	
+		
+			IF f_st <> 1 THEN
+				list_from := list_from || ',' || cur_view;
+			ELSE 
+				list_from := list_from || cur_view;
+			END IF;
+
+			IF f_st = 0 THEN
+				list_conditions_where := list_conditions_where || ' ' || cur_view || '.uk = ' || prev_view || '.uk' || ' AND ';			
+			END IF;
+		
+			-- опускаем флаг первой итерации
+			f_st := 0;
+		
+			prev_view := cur_view;
+		END LOOP;
+
+		-- убираем лишнюю запятую в списке выражения coalesce	
+		list_coalesce := regexp_replace(list_coalesce, ',$');
+	
+		-- убираем лишнюю запятую в списке столбцов селекта
+		list_select_1 := regexp_replace(list_select_1, ',$');
+	
+		-- убираем последний AND в условии фильтрации
+		list_conditions_where := regexp_replace(list_conditions_where, 'AND $');
+	
+		result_query := header_view_1 
+						|| list_coalesce
+						|| part_select_1
+						|| list_select_1
+						|| list_from
+						|| list_conditions_where;
+	
+		mike.logs.log(2, 'сформирован итоговый запрос', CONSTANTS.stg_title_lvl, 'create_view_wdelta_U', p_id_job);
+					
+		EXECUTE IMMEDIATE result_query;
+		
+		mike.logs.log(3, 'запрос выполнен - вьюха создана', CONSTANTS.stg_title_lvl, 'create_view_wdelta_U', p_id_job);
+	END;
+
 END;
 
 /*
 
 begin
-	mike.stg.create_view_wdelta_P_U(1);
+	mike.stg.wrap_stg();
 end;
 
  */
