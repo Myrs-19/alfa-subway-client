@@ -1,9 +1,7 @@
-CREATE OR REPLACE PACKAGE BODY mike.stg IS 
-
 	-- процедура обертка над всем уровнем stg
 	-- в ней генерится номер джоба и передается на след уровни обработки в рамках staging уровня
 	-- она же имеет джоб, который запускается каждые 5 минут
-	PROCEDURE wrap_stg
+	CREATE OR REPLACE PROCEDURE mike.wrap_stg
 	IS
 		l_id_job NUMBER := -1; -- номер джоба
 		error_message VARCHAR2(256 CHAR); -- сообщение об ошибке
@@ -30,18 +28,18 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 			mike.logs.log(1, 'запуск stg уровня', CONSTANTS.stg_title_lvl, 'wrap_stg', l_id_job);
 		
 			IF l_id_job <> -1 THEN 
-				mike.stg.wrap_mapping(l_id_job);
+				mike.wrap_mapping(l_id_job);
 			
 				mike.logs.log(2, 'выполнен маппинг', CONSTANTS.stg_title_lvl, 'wrap_stg', l_id_job);
 			
-				mike.stg.wrap_ucontext(l_id_job);
+				mike.wrap_ucontext(l_id_job);
 			
 				mike.logs.log(3, 'выполнена унификация записи и создание контекста', CONSTANTS.stg_title_lvl, 'wrap_stg', l_id_job);
 			
-				mike.stg.uwdelta(l_id_job);
+				mike.uwdelta(l_id_job);
 			
 				mike.logs.log(4, 'выполнена унификация записи и создание контекста', CONSTANTS.stg_title_lvl, 'wrap_stg', l_id_job);
-			
+
 				mike.orchestrator.insert_into_orchestrator(
 	    			CONSTANTS.dimension_client_title,
 	    			1,
@@ -59,16 +57,16 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	END;
 
 	-- обертка для маппинга
-	PROCEDURE wrap_mapping(
+	CREATE OR REPLACE PROCEDURE mike.wrap_mapping(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
 	BEGIN
-		mike.stg.mapping_001(p_id_job);
+		mike.mapping_001(p_id_job);
 	
 		mike.logs.log(1, 'выполнен маппинг источника с кодом 001', CONSTANTS.stg_title_lvl, 'wrap_mapping', p_id_job);
 	
-		mike.stg.mapping_002(p_id_job);
+		mike.mapping_002(p_id_job);
 	
 		mike.logs.log(2, 'выполнен маппинг источника с кодом 002', CONSTANTS.stg_title_lvl, 'wrap_mapping', p_id_job);
 	END;
@@ -76,7 +74,7 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	-- маппинг источника с кодом 001
 	-- звезда
 	-- маппинг - сначала валидация и трансформация
-	PROCEDURE mapping_001(
+	CREATE OR REPLACE PROCEDURE mike.mapping_001(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
@@ -129,7 +127,7 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	END;
 
 	-- маппинг источника с кодом 002
-	PROCEDURE mapping_002(
+	CREATE OR REPLACE PROCEDURE mike.mapping_002(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
@@ -182,7 +180,7 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	END;
 
 	-- обертка на унификации записи и создание контекста
-	PROCEDURE wrap_ucontext(
+	CREATE OR REPLACE PROCEDURE mike.wrap_ucontext(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
@@ -198,10 +196,33 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 
 	-- унификация записи
 	-- здесь генерится новые uk
-	PROCEDURE uni_record(
+	CREATE OR REPLACE PROCEDURE mike.uni_record(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
+	CURSOR c IS 
+			SELECT dwsjob, dwseid, nk, inn
+		FROM STG.CLIENT_CDELTA cdelta
+		WHERE EXISTS(
+			SELECT 1
+			FROM STG.CLIENT_CDELTA cdelta_inner
+			WHERE cdelta_inner.dwsjob < p_id_job
+				AND cdelta_inner.dwseid <> cdelta.dwseid
+				AND cdelta_inner.nk <> cdelta.nk
+				AND cdelta_inner.inn = cdelta.inn
+				AND cdelta_inner.dwsact <> 'D'
+		) AND nk IN (
+			SELECT nk FROM STG.CLIENT_UKLINK uklink
+		);
+	
+	l_dwsjob NUMBER;
+	l_dwseid NUMBER;
+	l_nk NUMBER;
+	l_inn NUMBER;
+
+	l_target_uk NUMBER;
+	l_target_nk NUMBER;
+	
 	BEGIN
 		-- очищаем промежуточную таблицу
 		DELETE FROM mike.staging_uni_record;
@@ -272,20 +293,60 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 		USING (
 			SELECT *
 			FROM STG.CLIENT_CDELTA cdelta
-			WHERE dwsuniact = 'U' AND cdelta.dwsjob = p_id_job
+			WHERE dwsuniact = 'U' 
+				AND cdelta.dwsjob = p_id_job 
+				AND NOT EXISTS(
+				SELECT 1
+				FROM STG.CLIENT_CDELTA cdelta_inner
+				WHERE cdelta_inner.dwsjob < p_id_job
+					AND cdelta_inner.dwseid <> cdelta.dwseid
+					AND cdelta_inner.nk <> cdelta.nk
+					AND cdelta_inner.dwsact <> 'D'
+			)
 		) cdelta
 		ON (
 			cdelta.nk = uklink.nk
 		)
 		WHEN MATCHED THEN
-		UPDATE SET 
+		UPDATE SET
 			uk = mike.key_dwh.nextval;
 		
-		mike.logs.log(4, 'обновили uk для dwsuniact = U, унификация записи завершена', CONSTANTS.stg_title_lvl, 'uni_record', p_id_job);
+		mike.logs.log(4, 'обновили uk для dwsuniact = U для новых логических ключей, унификация записи завершена', CONSTANTS.stg_title_lvl, 'uni_record', p_id_job);
+	
+		OPEN c;
+	
+		LOOP
+			FETCH c INTO l_dwsjob, l_dwseid, l_nk, l_inn;
+			EXIT WHEN c%NOTFOUND;
+			
+			SELECT DISTINCT cdelta_inner2.uk, max(cdelta_inner2.nk)
+			INTO l_target_uk, l_target_nk
+			FROM (
+				SELECT cdelta_inner2.*, uklink.uk
+				FROM STG.CLIENT_CDELTA cdelta_inner2
+				JOIN STG.CLIENT_UKLINK uklink ON uklink.nk = cdelta_inner2.nk
+			) cdelta_inner2
+			WHERE cdelta_inner2.dwsjob < l_dwsjob
+				AND cdelta_inner2.dwseid <> l_dwseid
+				AND cdelta_inner2.nk <> l_nk
+				AND cdelta_inner2.dwsact <> 'D'
+			GROUP BY uk;
+		
+		dbms_output.put_line(l_target_uk || ' ' || l_dwsjob || ' ' || l_target_nk);
+		
+		UPDATE STG.CLIENT_UKLINK uklink SET 
+				uk = l_target_uk,
+				dwsjob = l_dwsjob
+			WHERE nk = l_target_nk;
+		
+		END LOOP;
+	
+		mike.logs.log(5, 'обновили uk для dwsuniact = U для старых логических ключей, унификация записи завершена', CONSTANTS.stg_title_lvl, 'uni_record', p_id_job);
+	
 	END;
 
 	-- создание контекста
-	PROCEDURE context(
+	CREATE OR REPLACE PROCEDURE mike.context(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
@@ -388,36 +449,36 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	END;
 
 	-- унификация атрибутов и создание контексной дельты
-	PROCEDURE uwdelta(
+	CREATE OR REPLACE PROCEDURE mike.uwdelta(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
 	BEGIN
 		
---		mike.stg.create_view_wdelta_A_I(p_id_job);
---		
---		mike.logs.log(1, 'сформирована вьюха для A I', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
---		
---		mike.stg.create_view_wdelta_A_U(p_id_job);
---		
---		mike.logs.log(2, 'сформирована вьюха для A U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
---		
---		mike.stg.create_view_wdelta_P_I(p_id_job);
---		
---		mike.logs.log(3, 'сформирована вьюха для P I', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
---	
---		mike.stg.create_view_wdelta_P_U(p_id_job);
---		
---		mike.logs.log(4, 'сформирована вьюха для P U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
---	
---		mike.stg.create_view_wdelta_I(p_id_job);
---		
---		mike.logs.log(5, 'сформирована вьюха для U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
---	
---		mike.stg.create_view_wdelta_U(p_id_job);
---		
---		mike.logs.log(6, 'сформирована вьюха для U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
---		
+		mike.create_view_wdelta_A_I(p_id_job);
+		
+		mike.logs.log(1, 'сформирована вьюха для A I', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+		
+		mike.create_view_wdelta_A_U(p_id_job);
+		
+		mike.logs.log(2, 'сформирована вьюха для A U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+		
+		mike.create_view_wdelta_P_I(p_id_job);
+		
+		mike.logs.log(3, 'сформирована вьюха для P I', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+	
+		mike.create_view_wdelta_P_U(p_id_job);
+		
+		mike.logs.log(4, 'сформирована вьюха для P U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+	
+		mike.create_view_wdelta_I(p_id_job);
+		
+		mike.logs.log(5, 'сформирована вьюха для U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+	
+		mike.create_view_wdelta_U(p_id_job);
+		
+		mike.logs.log(6, 'сформирована вьюха для U', CONSTANTS.stg_title_lvl, 'uwdelta', p_id_job);
+		
 		INSERT INTO STG.CLIENT_WDELTA (
 			-- ключи dwh
 			uk, -- унифицированный ключ измерения в dwh
@@ -499,7 +560,7 @@ CREATE OR REPLACE PACKAGE BODY mike.stg IS
 	END;
 
 	-- создание вьюхи из таблицы с типами унификации для каждого атрибута
-	PROCEDURE create_view_wdelta_A_I(
+	CREATE OR REPLACE PROCEDURE mike.create_view_wdelta_A_I(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
@@ -570,7 +631,7 @@ GROUP BY context.uk';
 		mike.logs.log(5, 'запрос выполнен', CONSTANTS.stg_title_lvl, 'create_view_wdelta_A_I', p_id_job);
 	END;
 
-	PROCEDURE create_view_wdelta_A_U(
+	CREATE OR REPLACE PROCEDURE mike.create_view_wdelta_A_U(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
@@ -676,7 +737,7 @@ WHERE ';
 
 	-- создание вьюхи типа I из таблицы с типами унификации для каждого атрибута
 	-- для типа унификации атрибута - приоритет
-	PROCEDURE create_view_wdelta_P_I(
+	CREATE OR REPLACE PROCEDURE mike.create_view_wdelta_P_I(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
@@ -769,7 +830,7 @@ WHERE rn = 1';
 
 	-- создание вьюхи типа U из таблицы с типами унификации для каждого атрибута
 	-- для типа унификации атрибута - приоритет
-	PROCEDURE create_view_wdelta_P_U(
+	CREATE OR REPLACE PROCEDURE mike.create_view_wdelta_P_U(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
@@ -910,7 +971,7 @@ WHERE (wdelta.';
 	END;
 
 	-- создание итоговой вьюхи для случая I
-	PROCEDURE create_view_wdelta_I(
+	CREATE OR REPLACE PROCEDURE mike.create_view_wdelta_I(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
@@ -1030,7 +1091,7 @@ SELECT
 	END;
 
 	-- создание итоговой вьюхи для случая U
-	PROCEDURE create_view_wdelta_U(
+	CREATE OR REPLACE PROCEDURE mike.create_view_wdelta_U(
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
@@ -1149,12 +1210,10 @@ SELECT
 		mike.logs.log(3, 'запрос выполнен - вьюха создана', CONSTANTS.stg_title_lvl, 'create_view_wdelta_U', p_id_job);
 	END;
 
-END;
-
 /*
 
 begin
-	mike.stg.wrap_stg();
+	mike.wrap_stg();
 end;
 
  */

@@ -100,5 +100,9 @@ DELETE FROM mike.star_client WHERE id = 1;
 
 -- меняю телефон у пользователя с inn = 123-123-111 33 и pk = 1
 UPDATE mike.star_client SET 
-	phone = '+7(999)615-11-12'
-WHERE id = 1;
+	phone = '+7(999)655-11-11'
+WHERE id = 2;
+
+UPDATE mike.star_client SET 
+	inn = '123-456-177 99'
+WHERE id = 2;

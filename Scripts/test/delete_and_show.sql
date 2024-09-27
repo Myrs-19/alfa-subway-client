@@ -50,7 +50,7 @@ delete FROM STG.CLIENT_WDELTA;
 BEGIN
 	--mike.dwi.wrap_dwi();
 	mike.dws.wrap_dws();
-	mike.stg.wrap_stg();
+	mike.wrap_stg();
 END;
 
 SELECT * from mike.orchestrator_alfa
