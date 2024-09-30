@@ -1,90 +1,32 @@
-CREATE OR REPLACE PROCEDURE mike.t_e
-IS 
-	error_message VARCHAR2(256 CHAR);
-BEGIN 
-	BEGIN
-		mike.t_ee();
-	EXCEPTION
-	   	WHEN OTHERS THEN
-	   		error_message := SUBSTR(SQLERRM, 1, 256);
-	   		dbms_output.put_line(error_message);
-	END;
-END;
-
-
-CREATE OR REPLACE PROCEDURE mike.t_ee
-IS 
-	x real;
-BEGIN 
-	SELECT 1/0
-	INTO x
-	FROM dual;
-END;
-
-
-BEGIN
-	mike.t_e();
-END;
-
-
-
-SELECT *
-FROM dual d
-GROUP BY 
-
-SELECT *
-FROM dual
-WHERE (1,2) = (1,2);
-
-DECLARE
-j NUMBER;
-BEGIN
-	SELECT min(j_n) INTO j
-	FROM (
-		SELECT job_number j_n
-		FROM mike.orchestrator_alfa
-		WHERE staging_lvl = mike.CONSTANTS.dwi_title_lvl AND is_successful = 1 AND need_process = 1
-		MINUS 
-		SELECT job_number j_n
-		FROM mike.orchestrator_alfa
-		WHERE staging_lvl = mike.CONSTANTS.dws_title_lvl
-	);
-
-	dbms_output.put_line(j);
-END;
-
-
-
-DECLARE
-	c NUMBER;
-BEGIN
-			SELECT nvl(min(j_n), -1)
-			INTO c
+SELECT DISTINCT cdelta_inner2.uk, max(cdelta_inner2.nk)
+		--	INTO l_target_uk, l_target_nk
 			FROM (
-				SELECT job_number j_n
-				FROM mike.orchestrator_alfa
-				WHERE staging_lvl = mike.CONSTANTS.dws_title_lvl 
-					AND is_successful = 1 
-					AND need_process = 1
-				MINUS 
-				SELECT job_number j_n
-				FROM mike.orchestrator_alfa
-				WHERE staging_lvl = 'mike.CONSTANTS.stg_title_lvl '
-					AND is_successful = 1
-			);
+				SELECT cdelta_inner2.*, uklink.uk
+				FROM STG.CLIENT_CDELTA cdelta_inner2
+				JOIN STG.CLIENT_UKLINK uklink ON uklink.nk = cdelta_inner2.nk
+			) cdelta_inner2
+			WHERE cdelta_inner2.dwsjob <> 4
+				AND cdelta_inner2.dwseid <> 2
+				AND cdelta_inner2.nk <> 849
+				AND cdelta_inner2.inn = 12345612331
+				AND cdelta_inner2.dwsact <> 'D'
+			GROUP BY uk;
+			
 		
-		dbms_output.put_line(c);
-END;
-
-MERGE INTO STG.CLIENT_UKLINK uklink
-USING (
-	SELECT *
-	FROM STG.CLIENT_CDELTA cdelta
-	WHERE dwsuniact = 'U'
-) cdelta
-ON (
-	cdelta.uk = uklink.uk
-)
-WHEN MATCHED THEN
-UPDATE SET 
-	uk = mike.key_dwh.nextval;
+		
+		SELECT dwsjob, dwseid, nk, inn, uk
+		FROM (
+		SELECT cdelta.*, uklink.uk
+		FROM STG.CLIENT_CDELTA cdelta
+		JOIN STG.CLIENT_UKLINK uklink
+			ON uklink.nk = cdelta.nk
+		) cdelta
+		WHERE EXISTS(
+			SELECT 1
+			FROM STG.CLIENT_CDELTA cdelta_inner
+			WHERE cdelta_inner.dwsjob < 6
+				AND cdelta_inner.dwseid <> cdelta.dwseid
+				AND cdelta_inner.nk <> cdelta.nk
+				AND cdelta_inner.inn = cdelta.inn
+				AND cdelta_inner.dwsact <> 'D'
+		);

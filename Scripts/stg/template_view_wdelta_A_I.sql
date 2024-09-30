@@ -1,8 +1,8 @@
--- TODO
+-- ШАБЛОН НА СОЗДАНИЕ ВЬЮХИ ДЛЯ УНИФИКАЦИИ АТРИБУТА C ТИПОМ АГРЕГАЦИИ
 
 -- вьюха для insert`а в wdelta, случай, когда dwsact = I
 -- то есть для новых uk
-CREATE OR REPLACE VIEW mike.v_wdelta_I AS 
+CREATE OR REPLACE VIEW mike.v_wdelta_A_I AS 
 SELECT
 	-- ключи dwh
 	context.uk uk,
@@ -27,6 +27,6 @@ LEFT JOIN STG.CLIENT_WDELTA wdelta
 WHERE wdelta.uk IS NULL
 GROUP BY context.uk;
 
-SELECT * FROM mike.v_wdelta_I;
+SELECT * FROM mike.v_wdelta_A_I;
 
 SELECT * FROM STG.CLIENT_CONTEXT;

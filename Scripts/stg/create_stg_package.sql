@@ -40,4 +40,38 @@ CREATE OR REPLACE PACKAGE mike.stg AS
 	PROCEDURE uwdelta(
 		p_id_job NUMBER -- номер джоба
 	);
+
+	-- создание вьюхи типа I из таблицы с типами унификации для каждого атрибута
+	-- для типа унификации атрибута - агрегация
+	PROCEDURE create_view_wdelta_A_I(
+		p_id_job NUMBER -- номер джоба
+	);
+
+	-- создание вьюхи типа U из таблицы с типами унификации для каждого атрибута
+	-- для типа унификации атрибута - агрегация
+	PROCEDURE create_view_wdelta_A_U(
+		p_id_job NUMBER -- номер джоба
+	);
+
+	-- создание вьюхи типа I из таблицы с типами унификации для каждого атрибута
+	-- для типа унификации атрибута - приоритет
+	PROCEDURE create_view_wdelta_P_I(
+		p_id_job NUMBER -- номер джоба
+	);
+
+	-- создание вьюхи типа U из таблицы с типами унификации для каждого атрибута
+	-- для типа унификации атрибута - приоритет
+	PROCEDURE create_view_wdelta_P_U(
+		p_id_job NUMBER -- номер джоба
+	);
+
+	-- создание итоговой вьюхи для случая I
+	PROCEDURE create_view_wdelta_I(
+		p_id_job NUMBER -- номер джоба
+	);
+
+	-- создание итоговой вьюхи для случая U
+	PROCEDURE create_view_wdelta_U(
+		p_id_job NUMBER -- номер джоба
+	);
 END;

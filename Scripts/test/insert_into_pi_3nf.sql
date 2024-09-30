@@ -45,3 +45,6 @@ UPDATE mike.personal_information
 DELETE FROM mike.personal_information 
 	WHERE id = 1;
 	
+UPDATE mike.personal_information 
+	SET name = 'tetete'
+	WHERE id = 3;
