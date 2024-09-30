@@ -200,21 +200,22 @@
 		p_id_job NUMBER -- номер джоба
 	)
 	IS
-	CURSOR c IS 
-			SELECT dwsjob, dwseid, nk, inn
+	-- выбираем записи этой выгрузки, для которых есть такой inn
+	CURSOR c IS 	
+		SELECT dwsjob, dwseid, nk, inn
 		FROM STG.CLIENT_CDELTA cdelta
-		WHERE EXISTS(
+		WHERE
+		-- если есть такой inn в предыдущих выгрузках
+		EXISTS(
 			SELECT 1
 			FROM STG.CLIENT_CDELTA cdelta_inner
 			WHERE cdelta_inner.dwsjob < p_id_job
-				AND cdelta_inner.dwseid <> cdelta.dwseid
-				AND cdelta_inner.nk <> cdelta.nk
 				AND cdelta_inner.inn = cdelta.inn
 				AND cdelta_inner.dwsact <> 'D'
-		) AND nk IN (
-			SELECT nk FROM STG.CLIENT_UKLINK uklink
-		);
-	
+		) 
+		AND cdelta.dwsjob = p_id_job
+		AND cdelta.dwsuniact = 'U';
+
 	l_dwsjob NUMBER;
 	l_dwseid NUMBER;
 	l_nk NUMBER;
@@ -293,7 +294,7 @@
 		USING (
 			SELECT *
 			FROM STG.CLIENT_CDELTA cdelta
-			WHERE dwsuniact = 'U' 
+			WHERE dwsuniact = 'U'
 				AND cdelta.dwsjob = p_id_job 
 				AND NOT EXISTS(
 				SELECT 1
@@ -315,29 +316,48 @@
 	
 		OPEN c;
 	
+		-- обработка переунификации, для inn которые уже были унифицированы на предыдущих выгрузках
 		LOOP
+			-- получаю nk и inn, который требует переунификации
 			FETCH c INTO l_dwsjob, l_dwseid, l_nk, l_inn;
 			EXIT WHEN c%NOTFOUND;
 			
-			SELECT DISTINCT cdelta_inner2.uk, max(cdelta_inner2.nk)
-			INTO l_target_uk, l_target_nk
-			FROM (
-				SELECT cdelta_inner2.*, uklink.uk
-				FROM STG.CLIENT_CDELTA cdelta_inner2
-				JOIN STG.CLIENT_UKLINK uklink ON uklink.nk = cdelta_inner2.nk
-			) cdelta_inner2
-			WHERE cdelta_inner2.dwsjob < l_dwsjob
-				AND cdelta_inner2.dwseid <> l_dwseid
-				AND cdelta_inner2.nk <> l_nk
-				AND cdelta_inner2.dwsact <> 'D'
-			GROUP BY uk;
+			SELECT DISTINCT uklink.uk
+			INTO l_target_uk
+			FROM STG.CLIENT_CDELTA cdelta
+			-- получаю uk для nk
+			JOIN STG.CLIENT_UKLINK uklink ON uklink.nk = cdelta.nk
+			WHERE cdelta.dwsjob < l_dwsjob -- предыдущие выгрузки
+				AND cdelta.dwsact <> 'D' -- запись не удалена
+				AND cdelta.inn = l_inn;
 		
-		dbms_output.put_line(l_target_uk || ' ' || l_dwsjob || ' ' || l_target_nk);
-		
-		UPDATE STG.CLIENT_UKLINK uklink SET 
-				uk = l_target_uk,
-				dwsjob = l_dwsjob
-			WHERE nk = l_target_nk;
+		MERGE INTO STG.CLIENT_UKLINK uklink
+		USING (
+			SELECT 
+				l_target_uk uk, 
+				l_nk nk
+			FROM dual
+		) mini_cdelta
+		ON (
+			mini_cdelta.nk = uklink.nk
+		)
+		WHEN MATCHED THEN 
+		UPDATE SET 
+			uklink.uk = mini_cdelta.uk,
+			uklink.dwsjob = p_id_job,
+			uklink.manual = 'N'
+		WHEN NOT MATCHED THEN 
+		INSERT (
+			uklink.nk,
+			uklink.uk,
+			uklink.dwsjob,
+			uklink.manual
+		) VALUES (
+			mini_cdelta.nk,
+			mini_cdelta.uk,
+			p_id_job,
+			'N'
+		);
 		
 		END LOOP;
 	
